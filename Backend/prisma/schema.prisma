@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum Role {
+  user
+  verified_trader
+}
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  username       String    @unique @db.VarChar(30)
+  email          String    @unique @db.VarChar(255)
+  password       String?
+  googleId       String?   @unique
+  avatarUrl      String?
+  website        String?
+  location       String?
+  role           Role      @default(user)
+  isVerified     Boolean   @default(false)
+  followersCount Int       @default(0)
+  followingCount Int       @default(0)
+  postsCount     Int       @default(0)
+  tradesCount    Int       @default(0)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLogin      DateTime?
+
+  // Relations
+  posts          Post[]
+  trades         Trade[]
+  following      Follow[]  @relation("follower")
+  followers      Follow[]  @relation("following")
+
+  @@map("users")
+}
+
+enum PostType {
+  post
+  repost
+}
+
+model Post {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  content        String?
+  mediaUrls      String[]
+  tradeId        String?   @db.Uuid
+  originalPostId String?   @db.Uuid
+  postType       PostType  @default(post)
+  likesCount     Int       @default(0)
+  commentsCount  Int       @default(0)
+  repostsCount   Int       @default(0)
+  bookmarksCount Int       @default(0)
+  isDeleted      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  user           User      @relation(fields: [userId], references: [id])
+  trade          Trade?    @relation(fields: [tradeId], references: [id])
+  originalPost   Post?     @relation("reposts", fields: [originalPostId], references: [id])
+  reposts        Post[]    @relation("reposts")
+
+  @@map("posts")
+}
+
+enum TradeType {
+  long
+  short
+}
+
+enum TradeStatus {
+  open
+  closed
+  cancelled
+}
+
+model Trade {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @db.Uuid
+  coinSymbol     String
+  coinName       String
+  entryPrice     Decimal
+  targetPrice    Decimal
+  stopLoss       Decimal?
+  currentPrice   Decimal?
+  profitLoss     Decimal?
+  tradeType      TradeType
+  status         TradeStatus @default(open)
+  strategy       String?
+  holdTime       String?
+  likesCount     Int         @default(0)
+  commentsCount  Int         @default(0)
+  repostsCount   Int         @default(0)
+  bookmarksCount Int         @default(0)
+  isDeleted      Boolean     @default(false)
+  closedAt       DateTime?
+  createdAt      DateTime    @default(now())
+
+  // Relations
+  user           User        @relation(fields: [userId], references: [id])
+  posts          Post[]
+
+  @@map("trades")
+}
+
+model Follow {
+  id          String   @id @default(uuid()) @db.Uuid
+  followerId  String   @db.Uuid
+  followingId String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  // Relations
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+  following   User     @relation("following", fields: [followingId], references: [id])
+
+  // Prevent duplicate follows
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
