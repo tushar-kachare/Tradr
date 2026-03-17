@@ -102,10 +102,6 @@ model Trade {
   status         TradeStatus @default(open)
   strategy       String?
   holdTime       String?
-  likesCount     Int         @default(0)
-  commentsCount  Int         @default(0)
-  repostsCount   Int         @default(0)
-  bookmarksCount Int         @default(0)
   isDeleted      Boolean     @default(false)
   closedAt       DateTime?
   createdAt      DateTime    @default(now())

@@ -1,6 +1,6 @@
 # API Documentation
 
-> **Base URL:** `http://localhost:3000/api/v1`
+> **Base URL:** `http://localhost:3000/api/`
 > **Content-Type:** `application/json`
 > **Auth:** HttpOnly Cookie (`token`, JWT, 1 day) — use `credentials: 'include'` in all requests
 
@@ -252,5 +252,101 @@ Returns list of users that `:username` follows.
 
 ## Posts
 
+## Create Post
 
+**POST** `/api/posts/`
+🔒 Requires authentication
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `content` | string | ❌ | Post text / caption |
+| `mediaUrls` | string[] | ❌ | Array of media URLs |
+| `tradeId` | string (uuid) | ❌ | Share a trade (trade share post) |
+| `originalPostId` | string (uuid) | ❌ | Repost or quote repost |
+
+> At least one of `content`, `mediaUrls`, `tradeId`, or `originalPostId` must be provided.
+
+**Post Types**
+
+| Scenario | Fields to send |
+|---|---|
+| Regular post | `content` and/or `mediaUrls` |
+| Trade share | `tradeId` + optional `content` |
+| Repost | `originalPostId` |
+| Quote repost | `originalPostId` + `content` |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Post created successfully |
+| `400` | Empty post / `tradeId` and `originalPostId` sent together / reposting a repost |
+| `404` | Trade or original post not found |
+| `409` | User already reposted this post |
+| `500` | Internal server error |
+## Delete Post
+
+**DELETE** `/api/posts/:postId`
+🔒 Requires authentication
+
+**Params**
+
+| Field | Type | Description |
+|---|---|---|
+| `postId` | string (uuid) | ID of the post to delete |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Post deleted successfully |
+| `403` | You can only delete your own posts |
+| `404` | Post not found |
+| `500` | Internal server error |
+
+> Soft deletes the post (`isDeleted = true`). If the post is an original post, all its reposts are also soft deleted. If the post is a repost, `repostsCount` on the original post is decremented.
+
+## Get Feed from following
+
+**GET** `/api/posts/feed`
+🔒 Requires authentication
+
+**Query Params**
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `page` | number | `1` | Page number |
+| `limit` | number | `10` | Posts per page |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Feed fetched successfully |
+| `500` | Internal server error |
+
+> Returns paginated posts from followed users and the authenticated user themselves, ordered by newest first. Each post includes author info, trade data (if trade share), and original post data (if repost).
+
+## Get Explore Feed
+
+**GET** `/api/posts/feed`
+🔒 Requires authentication
+
+**Query Params**
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `page` | number | `1` | Page number |
+| `limit` | number | `10` | Posts per page |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Explore Feed fetched successfully |
+| `500` | Internal server error |
+
+> Returns paginated posts ordered by newest first. Each post includes author info, trade data (if trade share), and original post data (if repost).
 *Last updated: March 2026*
