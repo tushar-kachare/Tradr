@@ -409,6 +409,151 @@ const getFollowing = async (req, res) => {
   }
 };
 
+const getUserPosts = async (req, res) => {
+  const { userId } = req.params;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  console.log(userId);
+
+  try {
+    const targetUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        role: true,
+        isVerified: true,
+        followersCount: true,
+        followingCount: true,
+        postsCount: true,
+        tradesCount: true,
+        website: true,
+        location: true,
+        createdAt: true,
+      },
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    const isFollowing = await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: req.user.userId,
+          followingId: userId,
+        },
+      },
+    });
+
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        where: { userId, isDeleted: false },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          trade: {
+            where: { isDeleted: false },
+            select: {
+              id: true,
+              coinSymbol: true,
+              coinName: true,
+              tradeType: true,
+              status: true,
+              entryPrice: true,
+              targetPrice: true,
+              stopLoss: true,
+              currentPrice: true,
+              profitLoss: true,
+              strategy: true,
+              holdTime: true,
+              closedAt: true,
+              createdAt: true,
+            },
+          },
+          originalPost: {
+            where: { isDeleted: false },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatarUrl: true,
+                  role: true,
+                  isVerified: true,
+                },
+              },
+              trade: {
+                where: { isDeleted: false },
+                select: {
+                  id: true,
+                  coinSymbol: true,
+                  coinName: true,
+                  tradeType: true,
+                  status: true,
+                  entryPrice: true,
+                  targetPrice: true,
+                  stopLoss: true,
+                  currentPrice: true,
+                  profitLoss: true,
+                  strategy: true,
+                  holdTime: true,
+                  closedAt: true,
+                  createdAt: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+
+      prisma.post.count({
+        where: { userId, isDeleted: false },
+      }),
+    ]);
+
+    const shapedPosts = posts.map((post) => ({
+      id: post.id,
+      content: post.content,
+      mediaUrls: post.mediaUrls,
+      postType: post.postType,
+      likesCount: post.likesCount,
+      commentsCount: post.commentsCount,
+      repostsCount: post.repostsCount,
+      bookmarksCount: post.bookmarksCount,
+      createdAt: post.createdAt,
+      trade: post.trade ?? null,
+      originalPost: post.originalPost ?? null,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...targetUser,
+        isFollowing: !!isFollowing,
+      },
+      posts: shapedPosts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+      },
+    });
+  } catch (err) {
+    console.error("getPostsFromUser error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 module.exports = {
   me,
   getUserByUsername,
@@ -418,4 +563,5 @@ module.exports = {
   unFollowUser,
   getFollowers,
   getFollowing,
+  getUserPosts,
 };

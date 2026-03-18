@@ -8,11 +8,11 @@
 
 ## Authentication
 
-| Method | Endpoint          | Auth | Description  |
-|--------|-------------------|------|--------------|
-| POST   | `/auth/register`  | ❌   | Register     |
-| POST   | `/auth/login`     | ❌   | Login        |
-| POST   | `/auth/logout`    | ✅   | Logout       |
+| Method | Endpoint         | Auth | Description |
+| ------ | ---------------- | ---- | ----------- |
+| POST   | `/auth/register` | ❌   | Register    |
+| POST   | `/auth/login`    | ❌   | Login       |
+| POST   | `/auth/logout`   | ✅   | Logout      |
 
 ---
 
@@ -21,18 +21,19 @@
 **Body:** `username`, `email`, `password` (all required)
 
 **Success** `201`
+
 ```json
 { "success": true, "message": "User registered successfully", "user": { "id", "username", "email" } }
 ```
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
-| `400`  | `"All fields are required"` |
-| `400`  | `"Username already exists"` |
+| Status | Message                                       |
+| ------ | --------------------------------------------- |
+| `400`  | `"All fields are required"`                   |
+| `400`  | `"Username already exists"`                   |
 | `409`  | `"An account with this email already exists"` |
-| `500`  | `"Internal server error"` |
+| `500`  | `"Internal server error"`                     |
 
 ---
 
@@ -41,17 +42,18 @@
 **Body:** `email`, `password` (all required)
 
 **Success** `200`
+
 ```json
 { "success": true, "message": "Login successful", "user": { "id", "username", "email" } }
 ```
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
+| Status | Message                             |
+| ------ | ----------------------------------- |
 | `400`  | `"Email and password are required"` |
-| `401`  | `"Invalid email or password"` |
-| `500`  | `"Internal server error"` |
+| `401`  | `"Invalid email or password"`       |
+| `500`  | `"Internal server error"`           |
 
 ---
 
@@ -60,6 +62,7 @@
 No body required.
 
 **Success** `200`
+
 ```json
 { "success": true, "message": "Logged out successfully" }
 ```
@@ -67,6 +70,7 @@ No body required.
 **Errors** — `500` `"Logout failed"`
 
 ---
+
 ## Authentication Middleware
 
 All protected routes require a valid JWT cookie. The middleware decodes it and attaches the user to the request.
@@ -75,27 +79,28 @@ All protected routes require a valid JWT cookie. The middleware decodes it and a
 
 **Decoded payload attached to `req.user`**
 
-| Field      | Type     | Description              |
-|------------|----------|--------------------------|
-| `userId`   | `string` | UUID of the logged-in user |
-| `iat`      | `number` | Issued at (Unix timestamp) |
-| `exp`      | `number` | Expires at (Unix timestamp) |
+| Field    | Type     | Description                 |
+| -------- | -------- | --------------------------- |
+| `userId` | `string` | UUID of the logged-in user  |
+| `iat`    | `number` | Issued at (Unix timestamp)  |
+| `exp`    | `number` | Expires at (Unix timestamp) |
 
 **Error** — returned if token is missing or invalid
 
-| Status | Message |
-|--------|---------|
+| Status | Message                               |
+| ------ | ------------------------------------- |
 | `401`  | `"Access denied. No token provided."` |
-| `401`  | `"Invalid or expired token."` |
+| `401`  | `"Invalid or expired token."`         |
 
 ---
+
 ## Users
 
-| Method | Endpoint              | Auth | Description          |
-|--------|-----------------------|------|----------------------|
-| GET    | `/users/me`           | ✅   | Get own profile      |
-| GET    | `/users/:username`    | ❌   | Get user by username |
-| DELETE | `/users/me`           | ✅   | Delete own account   |
+| Method | Endpoint           | Auth | Description          |
+| ------ | ------------------ | ---- | -------------------- |
+| GET    | `/users/me`        | ✅   | Get own profile      |
+| GET    | `/users/:username` | ❌   | Get user by username |
+| DELETE | `/users/me`        | ✅   | Delete own account   |
 
 ---
 
@@ -104,6 +109,7 @@ All protected routes require a valid JWT cookie. The middleware decodes it and a
 No body required.
 
 **Success** `200`
+
 ```json
 {
   "success": true,
@@ -124,6 +130,7 @@ No body required.
 **Params:** `username` (string)
 
 **Success** `200`
+
 ```json
 {
   "success": true,
@@ -137,9 +144,9 @@ No body required.
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
-| `404`  | `"User not found"` |
+| Status | Message                  |
+| ------ | ------------------------ |
+| `404`  | `"User not found"`       |
 | `500`  | `"Failed to fetch user"` |
 
 ---
@@ -149,12 +156,13 @@ No body required.
 No body required.
 
 **Success** `200`
+
 ```json
 { "success": true, "message": "User deleted successfully" }
 ```
 
-**Errors** — `500` `"Failed to delete user"`
----
+## **Errors** — `500` `"Failed to delete user"`
+
 ### POST `/users/:username/follow`
 
 Logged-in user follows `:username`. Requires auth.
@@ -162,19 +170,22 @@ Logged-in user follows `:username`. Requires auth.
 **Params:** `username` (string)
 
 **Success** `200`
+
 ```json
 { "success": true, "message": "You are now following johndoe" }
 ```
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
-| `400`  | `"You cannot follow yourself"` |
-| `404`  | `"User not found"` |
+| Status | Message                                 |
+| ------ | --------------------------------------- |
+| `400`  | `"You cannot follow yourself"`          |
+| `404`  | `"User not found"`                      |
 | `409`  | `"You are already following this user"` |
-| `500`  | `"Failed to follow user"` |
+| `500`  | `"Failed to follow user"`               |
+
 ---
+
 ### DELETE `/users/:username/follow`
 
 Logged-in user unfollows `:username`. Requires auth.
@@ -182,18 +193,20 @@ Logged-in user unfollows `:username`. Requires auth.
 **Params:** `username` (string)
 
 **Success** `200`
+
 ```json
 { "success": true, "message": "You have unfollowed johndoe" }
 ```
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
-| `400`  | `"You cannot unfollow yourself"` |
-| `404`  | `"User not found"` |
+| Status | Message                             |
+| ------ | ----------------------------------- |
+| `400`  | `"You cannot unfollow yourself"`    |
+| `404`  | `"User not found"`                  |
 | `409`  | `"You are not following this user"` |
-| `500`  | `"Failed to unfollow user"` |
+| `500`  | `"Failed to unfollow user"`         |
+
 ---
 
 ### GET `/users/:username/followers`
@@ -203,6 +216,7 @@ Returns list of users who follow `:username`.
 **Params:** `username` (string)
 
 **Success** `200`
+
 ```json
 {
   "success": true,
@@ -215,9 +229,9 @@ Returns list of users who follow `:username`.
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
-| `404`  | `"User not found"` |
+| Status | Message                       |
+| ------ | ----------------------------- |
+| `404`  | `"User not found"`            |
 | `500`  | `"Failed to fetch followers"` |
 
 ---
@@ -229,25 +243,54 @@ Returns list of users that `:username` follows.
 **Params:** `username` (string)
 
 **Success** `200`
+
 ```json
 {
   "success": true,
   "count": 3,
-  "following": [
-    { "username": "bob", "avatarUrl": "...", "isVerified": true }
-  ]
+  "following": [{ "username": "bob", "avatarUrl": "...", "isVerified": true }]
 }
 ```
 
 **Errors**
 
-| Status | Message |
-|--------|---------|
-| `404`  | `"User not found"` |
+| Status | Message                       |
+| ------ | ----------------------------- |
+| `404`  | `"User not found"`            |
 | `500`  | `"Failed to fetch following"` |
+
 ---
 
-### *** Update Profile is remained 
+## Fetch Posts by User
+
+**GET** `/api/users/:userId/posts`
+🔒 Requires authentication
+
+**Params**
+
+| Field    | Type          | Description                         |
+| -------- | ------------- | ----------------------------------- |
+| `userId` | string (UUID) | ID of the user whose posts to fetch |
+
+**Query Params**
+
+| Field   | Type   | Default | Description    |
+| ------- | ------ | ------- | -------------- |
+| `page`  | number | `1`     | Page number    |
+| `limit` | number | `10`    | Posts per page |
+
+**Responses**
+
+| Status | Description                |
+| ------ | -------------------------- |
+| `200`  | Posts fetched successfully |
+| `404`  | User not found or inactive |
+| `500`  | Internal server error      |
+
+> Returns paginated posts by a specific user ordered by newest first. Response includes the user's profile data and `isFollowing` flag alongside the posts. Each post includes trade data (if trade share) and original post data (if repost).
+
+### \*\*\* Update Profile is remained
+
 ---
 
 ## Posts
@@ -259,33 +302,34 @@ Returns list of users that `:username` follows.
 
 **Request Body**
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `content` | string | ❌ | Post text / caption |
-| `mediaUrls` | string[] | ❌ | Array of media URLs |
-| `tradeId` | string (uuid) | ❌ | Share a trade (trade share post) |
-| `originalPostId` | string (uuid) | ❌ | Repost or quote repost |
+| Field            | Type          | Required | Description                      |
+| ---------------- | ------------- | -------- | -------------------------------- |
+| `content`        | string        | ❌       | Post text / caption              |
+| `mediaUrls`      | string[]      | ❌       | Array of media URLs              |
+| `tradeId`        | string (uuid) | ❌       | Share a trade (trade share post) |
+| `originalPostId` | string (uuid) | ❌       | Repost or quote repost           |
 
 > At least one of `content`, `mediaUrls`, `tradeId`, or `originalPostId` must be provided.
 
 **Post Types**
 
-| Scenario | Fields to send |
-|---|---|
-| Regular post | `content` and/or `mediaUrls` |
-| Trade share | `tradeId` + optional `content` |
-| Repost | `originalPostId` |
-| Quote repost | `originalPostId` + `content` |
+| Scenario     | Fields to send                 |
+| ------------ | ------------------------------ |
+| Regular post | `content` and/or `mediaUrls`   |
+| Trade share  | `tradeId` + optional `content` |
+| Repost       | `originalPostId`               |
+| Quote repost | `originalPostId` + `content`   |
 
 **Responses**
 
-| Status | Description |
-|---|---|
-| `201` | Post created successfully |
-| `400` | Empty post / `tradeId` and `originalPostId` sent together / reposting a repost |
-| `404` | Trade or original post not found |
-| `409` | User already reposted this post |
-| `500` | Internal server error |
+| Status | Description                                                                    |
+| ------ | ------------------------------------------------------------------------------ |
+| `201`  | Post created successfully                                                      |
+| `400`  | Empty post / `tradeId` and `originalPostId` sent together / reposting a repost |
+| `404`  | Trade or original post not found                                               |
+| `409`  | User already reposted this post                                                |
+| `500`  | Internal server error                                                          |
+
 ## Delete Post
 
 **DELETE** `/api/posts/:postId`
@@ -293,18 +337,18 @@ Returns list of users that `:username` follows.
 
 **Params**
 
-| Field | Type | Description |
-|---|---|---|
+| Field    | Type          | Description              |
+| -------- | ------------- | ------------------------ |
 | `postId` | string (uuid) | ID of the post to delete |
 
 **Responses**
 
-| Status | Description |
-|---|---|
-| `200` | Post deleted successfully |
-| `403` | You can only delete your own posts |
-| `404` | Post not found |
-| `500` | Internal server error |
+| Status | Description                        |
+| ------ | ---------------------------------- |
+| `200`  | Post deleted successfully          |
+| `403`  | You can only delete your own posts |
+| `404`  | Post not found                     |
+| `500`  | Internal server error              |
 
 > Soft deletes the post (`isDeleted = true`). If the post is an original post, all its reposts are also soft deleted. If the post is a repost, `repostsCount` on the original post is decremented.
 
@@ -315,17 +359,17 @@ Returns list of users that `:username` follows.
 
 **Query Params**
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `page` | number | `1` | Page number |
-| `limit` | number | `10` | Posts per page |
+| Field   | Type   | Default | Description    |
+| ------- | ------ | ------- | -------------- |
+| `page`  | number | `1`     | Page number    |
+| `limit` | number | `10`    | Posts per page |
 
 **Responses**
 
-| Status | Description |
-|---|---|
-| `200` | Feed fetched successfully |
-| `500` | Internal server error |
+| Status | Description               |
+| ------ | ------------------------- |
+| `200`  | Feed fetched successfully |
+| `500`  | Internal server error     |
 
 > Returns paginated posts from followed users and the authenticated user themselves, ordered by newest first. Each post includes author info, trade data (if trade share), and original post data (if repost).
 
@@ -336,17 +380,70 @@ Returns list of users that `:username` follows.
 
 **Query Params**
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `page` | number | `1` | Page number |
-| `limit` | number | `10` | Posts per page |
+| Field   | Type   | Default | Description    |
+| ------- | ------ | ------- | -------------- |
+| `page`  | number | `1`     | Page number    |
+| `limit` | number | `10`    | Posts per page |
 
 **Responses**
 
-| Status | Description |
-|---|---|
-| `200` | Explore Feed fetched successfully |
-| `500` | Internal server error |
+| Status | Description                       |
+| ------ | --------------------------------- |
+| `200`  | Explore Feed fetched successfully |
+| `500`  | Internal server error             |
 
 > Returns paginated posts ordered by newest first. Each post includes author info, trade data (if trade share), and original post data (if repost).
-*Last updated: March 2026*
+
+## Fetch Single Post
+
+**GET** `/api/posts/:postId`
+🔒 Requires authentication
+
+**Params**
+
+| Field    | Type          | Description             |
+| -------- | ------------- | ----------------------- |
+| `postId` | string (UUID) | ID of the post to fetch |
+
+**Responses**
+
+| Status | Description               |
+| ------ | ------------------------- |
+| `200`  | Post fetched successfully |
+| `404`  | Post not found or deleted |
+| `500`  | Internal server error     |
+
+> Fetches a single post with full nested data. If the post is a trade share, full trade data is attached. If it is a repost, the original post is attached along with its author and trade data (if the original was a trade share).
+
+## Update Post
+
+**PATCH** `/api/posts/:postId`
+🔒 Requires authentication
+
+**Params**
+
+| Field    | Type          | Description              |
+| -------- | ------------- | ------------------------ |
+| `postId` | string (UUID) | ID of the post to update |
+
+**Body**
+
+| Field       | Type     | Required | Description          |
+| ----------- | -------- | -------- | -------------------- |
+| `content`   | string   | No       | Updated text content |
+| `mediaUrls` | string[] | No       | Updated media URLs   |
+
+> At least one field must be provided.
+
+**Responses**
+
+| Status | Description                                                             |
+| ------ | ----------------------------------------------------------------------- |
+| `200`  | Post updated successfully                                               |
+| `400`  | Nothing to update / post would be empty / plain repost cannot be edited |
+| `403`  | Not the post owner                                                      |
+| `404`  | Post not found or deleted                                               |
+| `500`  | Internal server error                                                   |
+
+> Only `content` and `mediaUrls` are editable. `postType`, `tradeId`, and `originalPostId` cannot be changed after creation. Plain reposts (reposts with no content) cannot be edited.
+> _Last updated: March 2026_
