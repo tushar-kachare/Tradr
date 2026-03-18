@@ -165,9 +165,10 @@ const updatePortfolio = async (req, res) => {
       const newTotal = parseFloat(totalValue);
 
       if (isNaN(newTotal) || newTotal <= 0) {
-        return res
-          .status(400)
-          .json({ message: "Total value must be greater than 0" });
+        return res.status(400).json({
+          success: false,
+          message: "Total value must be greater than 0",
+        });
       }
 
       // Compute currently allocated value from open trades
@@ -188,16 +189,20 @@ const updatePortfolio = async (req, res) => {
 
       if (newTotal < allocatedValue) {
         return res.status(400).json({
+          success: false,
           message: `Total value cannot be less than currently allocated amount ($${allocatedValue.toFixed(2)})`,
         });
       }
 
-      updateData.totalValue = newTotal;
+      updateData.totalValue = parseFloat(newTotal.toFixed(2));
     }
 
     // Nothing was sent to update
     if (Object.keys(updateData).length === 0) {
-      return res.status(400).json({ message: "No fields provided to update" });
+      return res.status(400).json({
+        success: false,
+        message: "No fields provided to update",
+      });
     }
 
     const updated = await prisma.portfolio.update({
