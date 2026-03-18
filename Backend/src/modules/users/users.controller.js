@@ -554,6 +554,89 @@ const getUserPosts = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getUserPortfolio = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // Find user by username
+    const user = await prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { userId: user.id },
+      include: {
+        _count: {
+          select: { trades: true },
+        },
+      },
+    });
+
+    if (!portfolio) {
+      return res.status(404).json({
+        success: false,
+        message: "Portfolio not found",
+      });
+    }
+
+    // Fetch open trades to compute allocated value
+    const openTrades = await prisma.trade.findMany({
+      where: {
+        portfolioId: portfolio.id,
+        status: "open",
+        isDeleted: false,
+      },
+      select: { positionSize: true },
+    });
+
+    const closedTradesCount = await prisma.trade.count({
+      where: {
+        portfolioId: portfolio.id,
+        status: "closed",
+        isDeleted: false,
+      },
+    });
+
+    // Compute values
+    const totalValue = parseFloat(portfolio.totalValue);
+
+    const allocatedPercent = openTrades.reduce((sum, t) => {
+      return sum + (t.positionSize ? parseFloat(t.positionSize) : 0);
+    }, 0);
+
+    const allocatedValue = (allocatedPercent / 100) * totalValue;
+    const availableValue = totalValue - allocatedValue;
+    const availablePercent = 100 - allocatedPercent;
+
+    return res.status(200).json({
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      name: portfolio.name,
+      currency: portfolio.currency,
+      totalValue,
+      allocatedValue: parseFloat(allocatedValue.toFixed(2)),
+      availableValue: parseFloat(availableValue.toFixed(2)),
+      allocatedPercent: parseFloat(allocatedPercent.toFixed(2)),
+      availablePercent: parseFloat(availablePercent.toFixed(2)),
+      tradesCount: portfolio._count.trades,
+      openTradesCount: openTrades.length,
+      closedTradesCount,
+      createdAt: portfolio.createdAt,
+      updatedAt: portfolio.updatedAt,
+    });
+  } catch (err) {
+    console.error("getUserPortfolio error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   me,
   getUserByUsername,
@@ -564,4 +647,5 @@ module.exports = {
   getFollowers,
   getFollowing,
   getUserPosts,
+  getUserPortfolio,
 };

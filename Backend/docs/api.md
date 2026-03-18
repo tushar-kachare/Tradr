@@ -289,6 +289,50 @@ Returns list of users that `:username` follows.
 
 > Returns paginated posts by a specific user ordered by newest first. Response includes the user's profile data and `isFollowing` flag alongside the posts. Each post includes trade data (if trade share) and original post data (if repost).
 
+---
+
+### Get User Portfolio
+
+---
+
+**GET** `/users/:username/portfolio`
+
+Requires Authentication: `Yes`
+
+**URL Params**
+| Param | Type | Description |
+|---|---|---|
+| `username` | string | Username of the user |
+
+**Success Response `200`**
+
+```json
+{
+  "username": "safsaf",
+  "avatarUrl": null,
+  "name": "only Eth trades",
+  "currency": "USDT",
+  "totalValue": 10000,
+  "allocatedValue": 0,
+  "availableValue": 10000,
+  "allocatedPercent": 0,
+  "availablePercent": 100,
+  "tradesCount": 0,
+  "openTradesCount": 0,
+  "closedTradesCount": 0,
+  "createdAt": "2026-03-18T13:58:32.236Z",
+  "updatedAt": "2026-03-18T15:06:14.584Z"
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `401` | Unauthorized |
+| `404` | User not found |
+| `404` | Portfolio not found |
+| `500` | Internal server error |
+
 ### \*\*\* Update Profile is remained
 
 ---
@@ -446,4 +490,124 @@ Returns list of users that `:username` follows.
 | `500`  | Internal server error                                                   |
 
 > Only `content` and `mediaUrls` are editable. `postType`, `tradeId`, and `originalPostId` cannot be changed after creation. Plain reposts (reposts with no content) cannot be edited.
+
+---
+
+## Portfolio
+
+### Create Portfolio
+
+**POST** `/portfolio`
+
+Requires Authentication: `Yes`
+
+**Request Body**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `totalValue` | number | ✅ | Total portfolio value |
+| `name` | string | ❌ | Portfolio name (default: `"My Portfolio"`) |
+| `currency` | string | ❌ | Currency (default: `"USDT"`) |
+
+**Success Response `201`**
+
+```json
+{
+  "message": "Portfolio created successfully",
+  "portfolio": {
+    "id": "uuid",
+    "name": "My Portfolio",
+    "currency": "USDT",
+    "totalValue": 10000,
+    "createdAt": "2026-03-18T10:00:00.000Z",
+    "updatedAt": "2026-03-18T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Portfolio already exists |
+| `400` | Total value must be greater than 0 |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+---
+
+### Get My Portfolio
+
+**GET** `/portfolio/me`
+
+Requires Authentication: `Yes`
+
+**Success Response `200`**
+
+```json
+{
+  "id": "uuid",
+  "name": "My Portfolio",
+  "currency": "USDT",
+  "totalValue": 10000,
+  "allocatedValue": 3500,
+  "availableValue": 6500,
+  "allocatedPercent": 35,
+  "availablePercent": 65,
+  "tradesCount": 15,
+  "openTradesCount": 3,
+  "closedTradesCount": 12,
+  "createdAt": "2026-03-18T10:00:00.000Z",
+  "updatedAt": "2026-03-18T10:00:00.000Z"
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `401` | Unauthorized |
+| `404` | Portfolio not found |
+| `500` | Internal server error |
+
+---
+
+### Update Portfolio
+
+**PATCH** `/portfolio`
+
+Requires Authentication: `Yes`
+
+**Request Body** _(all fields optional, at least one required)_
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | New portfolio name |
+| `totalValue` | number | New total portfolio value |
+| `currency` | string | New currency |
+
+**Success Response `200`**
+
+```json
+{
+  "message": "Portfolio updated successfully",
+  "portfolio": {
+    "id": "uuid",
+    "name": "BTC Heavy",
+    "currency": "USDT",
+    "totalValue": 15000,
+    "createdAt": "2026-03-18T10:00:00.000Z",
+    "updatedAt": "2026-03-18T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | No fields provided to update |
+| `400` | Name cannot be empty |
+| `400` | Currency cannot be empty |
+| `400` | Total value must be greater than 0 |
+| `400` | Total value cannot be less than currently allocated amount ($X) |
+| `401` | Unauthorized |
+| `404` | Portfolio not found |
+| `500` | Internal server error |
+
 > _Last updated: March 2026_
