@@ -98,14 +98,16 @@ model Trade {
   coinSymbol    String                    // "BTC"
   coinName      String                    // "Bitcoin"
   tradingPair   String?                   // "BTC/USDT"
+  coinId        String
 
   // Trade setup
   tradeType     TradeType
   entryPrice    Decimal
-  targetPrice   Decimal
+  targetPrice   Decimal?
   stopLoss      Decimal?
   riskReward    Decimal?                  // auto-calculated: (target - entry) / (entry - stopLoss)
-  positionSize  Decimal?                  // % of portfolio e.g. 5.00
+  positionSize  Decimal                  // % of portfolio e.g. 5.00
+  actualAmount  Decimal                   // $ value locked at time of creation e.g. 2000.00
   leverage      Int         @default(1)   // 1x to 10x, 1 = spot trade
 
   // Live & close data
@@ -128,7 +130,7 @@ model Trade {
   user           User        @relation(fields: [userId], references: [id])
   posts          Post[]
   portfolio     Portfolio   @relation(fields: [portfolioId], references: [id])
-
+  coin          Coin     @relation(fields: [coinId], references: [id])
   @@map("trades")
 }
 
@@ -136,7 +138,8 @@ model Portfolio {
   id          String   @id @default(uuid()) @db.Uuid
   userId      String   @unique @db.Uuid
   name        String   @default("My Portfolio")   // ← add this
-  totalValue  Decimal
+  initialValue Decimal
+  balance      Decimal
   currency    String   @default("USDT")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -145,6 +148,18 @@ model Portfolio {
   trades      Trade[]
 
   @@map("portfolios")
+}
+
+model Coin {
+  id          String   @id @default(uuid())
+  symbol      String   @unique  // e.g. "BTC", "ETH"
+  name        String            // e.g. "Bitcoin", "Ethereum"
+  slug        String   @unique  // e.g. "bitcoin", for URLs
+  logoUrl     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  trades      Trade[]
 }
 
 model Follow {

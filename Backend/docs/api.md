@@ -312,11 +312,11 @@ Requires Authentication: `Yes`
   "avatarUrl": null,
   "name": "only Eth trades",
   "currency": "USDT",
-  "totalValue": 10000,
+  "initialValue": 10000,
+  "balance": 9000,
   "allocatedValue": 0,
   "availableValue": 10000,
-  "allocatedPercent": 0,
-  "availablePercent": 100,
+  "portfolioPnL": -4,
   "tradesCount": 0,
   "openTradesCount": 0,
   "closedTradesCount": 0,
@@ -495,6 +495,8 @@ Requires Authentication: `Yes`
 
 ## Portfolio
 
+### Portfolio table store initialValue and Balance (initialValue is fixed and Balance is updated when trade is closed only)
+
 ### Create Portfolio
 
 **POST** `/portfolio`
@@ -504,7 +506,7 @@ Requires Authentication: `Yes`
 **Request Body**
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `totalValue` | number | ✅ | Total portfolio value |
+| `initialValue` | number | ✅ | Starting portfolio value — fixed benchmark, never changes |
 | `name` | string | ❌ | Portfolio name (default: `"My Portfolio"`) |
 | `currency` | string | ❌ | Currency (default: `"USDT"`) |
 
@@ -512,12 +514,14 @@ Requires Authentication: `Yes`
 
 ```json
 {
-  "message": "Portfolio created successfully",
+  "success": true,
+  "message": "Portfolio created successfully.",
   "portfolio": {
     "id": "uuid",
     "name": "My Portfolio",
     "currency": "USDT",
-    "totalValue": 10000,
+    "initialValue": 10000,
+    "balance": 10000,
     "createdAt": "2026-03-18T10:00:00.000Z",
     "updatedAt": "2026-03-18T10:00:00.000Z"
   }
@@ -528,7 +532,7 @@ Requires Authentication: `Yes`
 | Status | Message |
 |---|---|
 | `400` | Portfolio already exists |
-| `400` | Total value must be greater than 0 |
+| `400` | initialValue must be greater than 0 |
 | `401` | Unauthorized |
 | `500` | Internal server error |
 
@@ -547,11 +551,11 @@ Requires Authentication: `Yes`
   "id": "uuid",
   "name": "My Portfolio",
   "currency": "USDT",
-  "totalValue": 10000,
+  "initialValue": 10000,
+  "balance": 9000,
   "allocatedValue": 3500,
   "availableValue": 6500,
-  "allocatedPercent": 35,
-  "availablePercent": 65,
+  "portfolioPnL": 30,
   "tradesCount": 15,
   "openTradesCount": 3,
   "closedTradesCount": 12,
@@ -579,19 +583,20 @@ Requires Authentication: `Yes`
 | Field | Type | Description |
 |---|---|---|
 | `name` | string | New portfolio name |
-| `totalValue` | number | New total portfolio value |
 | `currency` | string | New currency |
 
 **Success Response `200`**
 
 ```json
 {
+  "success":true
   "message": "Portfolio updated successfully",
   "portfolio": {
     "id": "uuid",
     "name": "BTC Heavy",
     "currency": "USDT",
-    "totalValue": 15000,
+    "initialValue": 15000,
+    "balance":10000,
     "createdAt": "2026-03-18T10:00:00.000Z",
     "updatedAt": "2026-03-18T10:00:00.000Z"
   }
@@ -608,6 +613,215 @@ Requires Authentication: `Yes`
 | `400` | Total value cannot be less than currently allocated amount ($X) |
 | `401` | Unauthorized |
 | `404` | Portfolio not found |
+| `500` | Internal server error |
+
+---
+
+### Trade
+
+---
+
+### Create Trade
+
+**POST** `/trades`
+
+Requires Authentication: `Yes`
+
+**Request Body**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `coin` | string | ✅ | Coin symbol e.g. `"BTC"` |
+| `tradeType` | string | ✅ | `"long"` or `"short"` |
+| `entryPrice` | number | ✅ | Price at entry |
+| `positionSize` | number | ✅ | % of portfolio e.g. `20` |
+| `targetPrice` | number | ❌ | Target exit price |
+| `stopLoss` | number | ❌ | Stop loss price |
+| `leverage` | number | ❌ | 1x to 10x (default: `1`) |
+| `holdTime` | string | ❌ | Expected hold duration e.g. `"1-3 days"` |
+| `strategy` | string | ❌ | Trade reasoning |
+| `tradingPair` | string | ❌ | e.g. `"BTC/USDT"` (auto-built if not sent) |
+
+**Success Response `201`**
+
+```json
+{
+  "success": true,
+  "message": "Trade created successfully.",
+  "trade": {
+    "id": "uuid",
+    "coinSymbol": "BTC",
+    "coinName": "Bitcoin",
+    "tradingPair": "BTC/USDT",
+    "tradeType": "long",
+    "entryPrice": 65000,
+    "targetPrice": 70000,
+    "stopLoss": 63000,
+    "positionSize": 20,
+    "actualAmount": 2000,
+    "leverage": 1,
+    "riskReward": "2.50",
+    "status": "open",
+    "holdTime": "1-3 days",
+    "strategy": "bullish breakout",
+    "createdAt": "2026-03-18T10:00:00.000Z",
+    "coin": { "symbol": "BTC", "name": "Bitcoin", "logoUrl": null },
+    "user": { "username": "tushar", "avatarUrl": null }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | coin, tradeType, entryPrice and positionSize are required |
+| `400` | tradeType must be long or short |
+| `400` | leverage must be between 1 to 10 |
+| `400` | positionSize must be between 1 and 100 |
+| `400` | Invalid coin symbol |
+| `400` | Insufficient portfolio allocation. Required: $X, Available: $Y |
+| `400` | stopLoss cannot be equal to entryPrice |
+| `404` | Portfolio not found. Please create a portfolio first |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+---
+
+### Update Trade
+
+**PATCH** `/trades/:id`
+
+Requires Authentication: `Yes`
+
+**Request Body** — at least one field required
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `targetPrice` | number | ❌ | Updated target price |
+| `stopLoss` | number | ❌ | Updated stop loss |
+| `holdTime` | string | ❌ | Updated hold duration |
+| `strategy` | string | ❌ | Updated reasoning |
+
+**Success Response `200`**
+
+```json
+{
+  "success": true,
+  "message": "Trade updated successfully.",
+  "trade": {
+    "id": "uuid",
+    "targetPrice": 72000,
+    "stopLoss": 62000,
+    "riskReward": "3.00",
+    "holdTime": "3-5 days",
+    "strategy": "updated reasoning",
+    "updatedAt": "2026-03-18T10:00:00.000Z",
+    "coin": { "symbol": "BTC", "name": "Bitcoin", "logoUrl": null },
+    "user": { "username": "tushar", "avatarUrl": null }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | At least one field is required to update |
+| `400` | targetPrice must be above entryPrice for a long trade |
+| `400` | targetPrice must be below entryPrice for a short trade |
+| `400` | Cannot update a closed/cancelled trade |
+| `403` | You are not authorized to update this trade |
+| `404` | Trade not found |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+---
+
+### Close Trade
+
+**PATCH** `/trades/:id/close`
+
+Requires Authentication: `Yes`
+
+**Request Body**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `exitPrice` | number | ✅ | Actual exit price |
+
+**Success Response `200`**
+
+```json
+{
+  "success": true,
+  "message": "Trade closed successfully.",
+  "trade": {
+    "id": "uuid",
+    "status": "closed",
+    "exitPrice": 66000,
+    "profitLoss": 10.0,
+    "closedAt": "2026-03-18T10:00:00.000Z",
+    "coin": { "symbol": "BTC", "name": "Bitcoin", "logoUrl": null },
+    "user": { "username": "tushar", "avatarUrl": null }
+  },
+  "summary": {
+    "entryPrice": 65000,
+    "exitPrice": 66000,
+    "profitLoss": "10%",
+    "actualGain": 200.0,
+    "newPortfolioBalance": 10200.0
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | exitPrice is required |
+| `400` | Trade is already closed/cancelled |
+| `403` | You are not authorized to close this trade |
+| `404` | Trade not found |
+| `404` | Portfolio not found |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+---
+
+### Get Trade By ID
+
+**GET** `/trades/:id`
+
+Requires Authentication: `No`
+
+**Success Response `200`**
+
+```json
+{
+  "success": true,
+  "trade": {
+    "id": "uuid",
+    "coinSymbol": "BTC",
+    "coinName": "Bitcoin",
+    "tradingPair": "BTC/USDT",
+    "tradeType": "long",
+    "entryPrice": 65000,
+    "targetPrice": 70000,
+    "stopLoss": 63000,
+    "positionSize": 20,
+    "actualAmount": 2000,
+    "leverage": 1,
+    "riskReward": "2.50",
+    "status": "open",
+    "profitLoss": null,
+    "exitPrice": null,
+    "closedAt": null,
+    "createdAt": "2026-03-18T10:00:00.000Z",
+    "coin": { "symbol": "BTC", "name": "Bitcoin", "logoUrl": null },
+    "user": { "username": "tushar", "avatarUrl": null }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `404` | Trade not found |
 | `500` | Internal server error |
 
 > _Last updated: March 2026_

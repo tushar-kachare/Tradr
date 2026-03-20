@@ -15,6 +15,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/posts", postsRouter);
 app.use("/api/portfolio", portfolioRouter);
-// app.use('/api/trades' , usersRouter);
+app.use("/api/trades", tradesRouter);
 
 module.exports = app;

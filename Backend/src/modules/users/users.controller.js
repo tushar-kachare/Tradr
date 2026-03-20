@@ -554,6 +554,7 @@ const getUserPosts = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const getUserPortfolio = async (req, res) => {
   try {
     const { username } = req.params;
@@ -593,7 +594,7 @@ const getUserPortfolio = async (req, res) => {
         status: "open",
         isDeleted: false,
       },
-      select: { positionSize: true },
+      select: { actualAmount: true },
     });
 
     const closedTradesCount = await prisma.trade.count({
@@ -605,26 +606,29 @@ const getUserPortfolio = async (req, res) => {
     });
 
     // Compute values
-    const totalValue = parseFloat(portfolio.totalValue);
+    const initialValue = parseFloat(portfolio.initialValue);
+    const balance = parseFloat(portfolio.balance);
 
-    const allocatedPercent = openTrades.reduce((sum, t) => {
-      return sum + (t.positionSize ? parseFloat(t.positionSize) : 0);
+    const allocatedValue = openTrades.reduce((sum, t) => {
+      return sum + (t.actualAmount ? parseFloat(t.actualAmount) : 0);
     }, 0);
 
-    const allocatedValue = (allocatedPercent / 100) * totalValue;
-    const availableValue = totalValue - allocatedValue;
-    const availablePercent = 100 - allocatedPercent;
+    const availableValue = balance - allocatedValue;
+
+    const portfolioPnL = parseFloat(
+      (((balance - initialValue) / initialValue) * 100).toFixed(2)
+    );
 
     return res.status(200).json({
       username: user.username,
       avatarUrl: user.avatarUrl,
       name: portfolio.name,
       currency: portfolio.currency,
-      totalValue,
+      initialValue,
+      balance: parseFloat(balance.toFixed(2)),
       allocatedValue: parseFloat(allocatedValue.toFixed(2)),
       availableValue: parseFloat(availableValue.toFixed(2)),
-      allocatedPercent: parseFloat(allocatedPercent.toFixed(2)),
-      availablePercent: parseFloat(availablePercent.toFixed(2)),
+      portfolioPnL,
       tradesCount: portfolio._count.trades,
       openTradesCount: openTrades.length,
       closedTradesCount,

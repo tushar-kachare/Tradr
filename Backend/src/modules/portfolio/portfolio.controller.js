@@ -2,7 +2,7 @@ const prisma = require("../../config/db");
 
 const createPortfolio = async (req, res) => {
   try {
-    const { name, totalValue, currency } = req.body;
+    const { name, initialValue, currency } = req.body;
     const userId = req.user.userId;
 
     // check if portfolio already exist;
@@ -18,18 +18,21 @@ const createPortfolio = async (req, res) => {
     }
 
     // validate totalValue
-    if (!totalValue || totalValue <= 0) {
+    if (!initialValue || parseFloat(initialValue) <= 0) {
       return res.status(400).json({
         success: false,
         message: "Total value must be greater than 0",
       });
     }
 
+    const startingValue = parseFloat(initialValue);
+
     const portfolio = await prisma.portfolio.create({
       data: {
         userId,
         name: name || "My Portfolio",
-        totalValue,
+        initialValue: startingValue, // fixed amount
+        balance: startingValue, // updates on trade close
         currency: currency || "USDT",
       },
     });
@@ -48,8 +51,6 @@ const createPortfolio = async (req, res) => {
 const getPortfolio = async (req, res) => {
   try {
     const userId = req.user.userId;
-
-    console.log(userId);
 
     const portfolio = await prisma.portfolio.findUnique({
       where: { userId },
@@ -74,7 +75,7 @@ const getPortfolio = async (req, res) => {
         status: "open",
         isDeleted: false,
       },
-      select: { positionSize: true },
+      select: { actualAmount: true },
     });
 
     const closedTradesCount = await prisma.trade.count({
@@ -86,15 +87,20 @@ const getPortfolio = async (req, res) => {
     });
 
     // Compute values
-    const totalValue = parseFloat(portfolio.totalValue);
+    const initialValue = parseFloat(portfolio.initialValue);
+    const balance = parseFloat(portfolio.balance);
 
-    const allocatedPercent = openTrades.reduce((sum, t) => {
-      return sum + (t.positionSize ? parseFloat(t.positionSize) : 0);
+    // allocatedValue — sum of actualAmount of all open trades in $
+    const allocatedValue = openTrades.reduce((sum, t) => {
+      return sum + (t.actualAmount ? parseFloat(t.actualAmount) : 0);
     }, 0);
 
-    const allocatedValue = (allocatedPercent / 100) * totalValue;
-    const availableValue = totalValue - allocatedValue;
-    const availablePercent = 100 - allocatedPercent;
+    const availableValue = balance - allocatedValue;
+
+    // Portfolio P&L
+    const portfolioPnL = parseFloat(
+      (((balance - initialValue) / initialValue) * 100).toFixed(2),
+    );
 
     return res.status(200).json({
       success: true,
@@ -102,11 +108,11 @@ const getPortfolio = async (req, res) => {
         id: portfolio.id,
         name: portfolio.name,
         currency: portfolio.currency,
-        totalValue,
+        initialValue,
+        balance,
         allocatedValue: parseFloat(allocatedValue.toFixed(2)),
         availableValue: parseFloat(availableValue.toFixed(2)),
-        allocatedPercent: parseFloat(allocatedPercent.toFixed(2)),
-        availablePercent: parseFloat(availablePercent.toFixed(2)),
+        portfolioPnL,
         tradesCount: portfolio._count.trades,
         openTradesCount: openTrades.length,
         closedTradesCount,
@@ -123,9 +129,9 @@ const getPortfolio = async (req, res) => {
 const updatePortfolio = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, totalValue, currency } = req.body;
+    const { name, currency } = req.body;
 
-    // check if portfolio exist
+    // check if portfolio exists
     const portfolio = await prisma.portfolio.findUnique({
       where: { userId },
     });
@@ -144,10 +150,9 @@ const updatePortfolio = async (req, res) => {
       if (typeof name !== "string" || name.trim() === "") {
         return res.status(400).json({
           success: false,
-          message: "Name cannot be empty",
+          message: "Name cannot be empty.",
         });
       }
-
       updateData.name = name.trim();
     }
 
@@ -155,53 +160,17 @@ const updatePortfolio = async (req, res) => {
       if (typeof currency !== "string" || currency.trim() === "") {
         return res.status(400).json({
           success: false,
-          message: "Currency cannot be empty",
+          message: "Currency cannot be empty.",
         });
       }
       updateData.currency = currency.trim().toUpperCase();
-    }
-
-    if (totalValue !== undefined) {
-      const newTotal = parseFloat(totalValue);
-
-      if (isNaN(newTotal) || newTotal <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Total value must be greater than 0",
-        });
-      }
-
-      // Compute currently allocated value from open trades
-      const openTrades = await prisma.trade.findMany({
-        where: {
-          portfolioId: portfolio.id,
-          status: "open",
-          isDeleted: false,
-        },
-        select: { positionSize: true },
-      });
-      const allocatedPercent = openTrades.reduce((sum, t) => {
-        return sum + (t.positionSize ? parseFloat(t.positionSize) : 0);
-      }, 0);
-
-      const currentTotal = parseFloat(portfolio.totalValue);
-      const allocatedValue = (allocatedPercent / 100) * currentTotal;
-
-      if (newTotal < allocatedValue) {
-        return res.status(400).json({
-          success: false,
-          message: `Total value cannot be less than currently allocated amount ($${allocatedValue.toFixed(2)})`,
-        });
-      }
-
-      updateData.totalValue = parseFloat(newTotal.toFixed(2));
     }
 
     // Nothing was sent to update
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No fields provided to update",
+        message: "No fields provided to update.",
       });
     }
 
@@ -212,15 +181,16 @@ const updatePortfolio = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Portfolio updated successfully",
+      message: "Portfolio updated successfully.",
       portfolio: updated,
     });
   } catch (err) {
     console.error("updatePortfolio error:", err);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "Internal server error.",
     });
   }
 };
+
 module.exports = { createPortfolio, getPortfolio, updatePortfolio };
