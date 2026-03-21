@@ -587,6 +587,403 @@ const updatePost = async (req, res) => {
   }
 };
 
+const likePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.userId;
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    // check if already liked
+    const existingLike = await prisma.like.findUnique({
+      where: { userId_postId: { userId, postId } },
+    });
+
+    if (existingLike) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Post already liked" });
+    }
+
+    // create like + increment count atomically
+    await prisma.$transaction([
+      prisma.like.create({ data: { userId, postId } }),
+      prisma.post.update({
+        where: { id: postId },
+        data: { likesCount: { increment: 1 } },
+      }),
+    ]);
+
+    return res.status(201).json({ success: true, message: "Post liked" });
+  } catch (err) {
+    console.error("likePost error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const unlikePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.userId;
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    // Check if like exists
+    const existingLike = await prisma.like.findUnique({
+      where: { userId_postId: { userId, postId } },
+    });
+
+    if (!existingLike) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Post not liked yet" });
+    }
+
+    // Delete like + decrement count atomically
+    await prisma.$transaction([
+      prisma.like.delete({
+        where: { userId_postId: { userId, postId } },
+      }),
+      prisma.post.update({
+        where: { id: postId },
+        data: { likesCount: { decrement: 1 } },
+      }),
+    ]);
+
+    return res.status(200).json({ success: true, message: "Post unliked" });
+  } catch (err) {
+    console.error("unlikePost error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const bookmarkPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.userId;
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    const existingBookmark = await prisma.bookmark.findUnique({
+      where: { userId_postId: { userId, postId } },
+    });
+
+    if (existingBookmark) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Post already bookmarked" });
+    }
+
+    await prisma.$transaction([
+      prisma.bookmark.create({ data: { userId, postId } }),
+      prisma.post.update({
+        where: { id: postId },
+        data: { bookmarksCount: { increment: 1 } },
+      }),
+    ]);
+
+    return res.status(201).json({ success: true, message: "Post bookmarked" });
+  } catch (err) {
+    console.error("bookmarkPost error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const unbookmarkPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.userId;
+
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    const existingBookmark = await prisma.bookmark.findUnique({
+      where: { userId_postId: { userId, postId } },
+    });
+
+    if (!existingBookmark) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Post not bookmarked yet" });
+    }
+
+    await prisma.$transaction([
+      prisma.bookmark.delete({
+        where: { userId_postId: { userId, postId } },
+      }),
+      prisma.post.update({
+        where: { id: postId },
+        data: { bookmarksCount: { decrement: 1 } },
+      }),
+    ]);
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Post unbookmarked" });
+  } catch (error) {
+    console.error("unbookmarkPost error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const createComment = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.userId;
+    const { content } = req.body;
+
+    // Validate content
+    if (!content || content.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Content is required" });
+    }
+
+    if (content.length > 500) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Comment cannot exceed 500 characters",
+        });
+    }
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    // Create comment + increment commentsCount atomically
+    const [comment] = await prisma.$transaction([
+      prisma.comment.create({
+        data: {
+          userId,
+          postId,
+          content: content.trim(),
+        },
+        select: {
+          id: true,
+          content: true,
+          postId: true,
+          parentId: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              isVerified: true,
+            },
+          },
+        },
+      }),
+      prisma.post.update({
+        where: { id: postId },
+        data: { commentsCount: { increment: 1 } },
+      }),
+    ]);
+
+    return res.status(201).json({ success: true, data: { comment } });
+  } catch (error) {
+    console.error("createComment error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getComments = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    if (isNaN(pageNum) || pageNum < 1) {
+      return res.status(400).json({ success: false, message: "Invalid page number" });
+    }
+
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
+      return res.status(400).json({ success: false, message: "Limit must be between 1 and 50" });
+    }
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res.status(404).json({ success: false, message: "Post not found" });
+    }
+
+    const skip = (pageNum - 1) * limitNum;
+
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
+        where: {
+          postId,
+          parentId: null,       // top level comments only
+          isDeleted: false,
+        },
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          content: true,
+          postId: true,
+          createdAt: true,
+          updatedAt: true,
+          // reply count so frontend can show "view X replies"
+          replies: {
+            where: { isDeleted: false },
+            select: { id: true },
+          },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+              isVerified: true,
+              role: true,
+            },
+          },
+        },
+      }),
+      prisma.comment.count({
+        where: { postId, parentId: null, isDeleted: false },
+      }),
+    ]);
+
+    // Format reply count
+    const formattedComments = comments.map((comment) => ({
+      ...comment,
+      repliesCount: comment.replies.length,
+      replies: undefined,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        comments: formattedComments,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: pageNum < Math.ceil(total / limitNum),
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("getComments error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const deleteComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const userId = req.user.userId;
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (!post || post.isDeleted) {
+      return res.status(404).json({ success: false, message: "Post not found" });
+    }
+
+    // Check if comment exists
+    const comment = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, userId: true, postId: true, parentId: true, isDeleted: true },
+    });
+
+    if (!comment || comment.isDeleted) {
+      return res.status(404).json({ success: false, message: "Comment not found" });
+    }
+
+    // Check ownership
+    if (comment.userId !== userId) {
+      return res.status(403).json({ success: false, message: "You can only delete your own comments" });
+    }
+
+    // Soft delete comment + decrement commentsCount atomically
+    await prisma.$transaction([
+      prisma.comment.update({
+        where: { id: commentId },
+        data: { isDeleted: true },
+      }),
+      prisma.post.update({
+        where: { id: postId },
+        data: { commentsCount: { decrement: 1 } },
+      }),
+    ]);
+
+    return res.status(200).json({ success: true, message: "Comment deleted" });
+  } catch (error) {
+    console.error("deleteComment error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
 module.exports = {
   createPost,
   deletePost,
@@ -594,4 +991,11 @@ module.exports = {
   getExplore,
   getPost,
   updatePost,
+  likePost,
+  unlikePost,
+  bookmarkPost,
+  unbookmarkPost,
+  createComment,
+  getComments,
+  deleteComment,
 };

@@ -359,9 +359,6 @@ const closeTrade = async (req, res) => {
       });
     }
 
-    // New balance = current balance + actualGain (profit or loss)
-    const newBalance = parseFloat(portfolio.balance) + actualGain;
-
     // Transaction — update trade and portfolio together
     const [updatedTrade] = await prisma.$transaction([
       prisma.trade.update({
@@ -380,7 +377,7 @@ const closeTrade = async (req, res) => {
       prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
-          balance: newBalance,
+          balance: {increment: actualGain},
         },
       }),
     ]);
@@ -405,4 +402,5 @@ const closeTrade = async (req, res) => {
     });
   }
 };
+
 module.exports = { createTrade, updateTrade, getTradeById, closeTrade };

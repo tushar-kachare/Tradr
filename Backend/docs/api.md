@@ -260,6 +260,53 @@ Returns list of users that `:username` follows.
 | `500`  | `"Failed to fetch following"` |
 
 ---
+### Search Users
+---
+
+**GET** `/users/search?q=username`
+
+Requires Authentication: `Yes`
+
+**Query Parameters**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `q` | string | - | Search term (min 2, max 30 chars) |
+| `page` | number | 1 | Page number |
+| `limit` | number | 10 | Records per page (max 50) |
+
+**Success Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": "uuid",
+        "username": "tushar",
+        "avatarUrl": null,
+        "role": "user",
+        "isVerified": false,
+        "followersCount": 120,
+        "followingCount": 80,
+        "isFollowing": false
+      }
+    ],
+    "pagination": { "total": 5, "page": 1, "limit": 10, "totalPages": 1, "hasNextPage": false, "hasPrevPage": false }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Search query is required |
+| `400` | Search query must be at least 2 characters |
+| `400` | Search query cannot exceed 30 characters |
+| `400` | Invalid page number |
+| `400` | Limit must be between 1 and 50 |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+---
 
 ## Fetch Posts by User
 
@@ -335,6 +382,67 @@ Requires Authentication: `Yes`
 
 ### \*\*\* Update Profile is remained
 
+---
+### Get User Trades
+
+**GET** `/users/:username/trades`
+
+Requires Authentication: `Yes`
+
+**Query Parameters**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `page` | number | 1 | Page number |
+| `limit` | number | 10 | Records per page (max 50) |
+| `status` | string | - | Filter by `open` or `closed` |
+
+**Success Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "user": { "id": "uuid", "username": "tushar" },
+    "trades": [
+      {
+        "id": "uuid",
+        "tradingPair": "BTC/USDT",
+        "tradeType": "long",
+        "status": "open",
+        "entryPrice": 65000,
+        "exitPrice": null,
+        "positionSize": 20,
+        "leverage": 1,
+        "riskReward": "2.50",
+        "holdTime": null,
+        "createdAt": "2026-03-18T10:00:00.000Z",
+        "closedAt": null,
+        "portfolio": {
+          "currency": "USDT",
+          "user": { "id": "uuid", "username": "tushar", "profilePicture": null }
+        }
+      }
+    ],
+    "pagination": {
+      "total": 47,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 5,
+      "hasNextPage": true,
+      "hasPrevPage": false
+    }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Invalid page number |
+| `400` | Limit must be between 1 and 50 |
+| `400` | Status must be 'open' or 'closed' |
+| `401` | Unauthorized |
+| `404` | User not found |
+| `500` | Internal server error |
 ---
 
 ## Posts
@@ -492,7 +600,297 @@ Requires Authentication: `Yes`
 > Only `content` and `mediaUrls` are editable. `postType`, `tradeId`, and `originalPostId` cannot be changed after creation. Plain reposts (reposts with no content) cannot be edited.
 
 ---
+### Like a Post
 
+**POST** `/posts/:postId/like`
+
+Requires Authentication: `Yes`
+
+**Success Response `201`**
+```json
+{ "success": true, "message": "Post liked" }
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `404` | Post not found |
+| `409` | Post already liked |
+| `500` | Internal server error |
+
+---
+
+### Unlike a Post
+
+**DELETE** `/posts/:postId/like`
+
+Requires Authentication: `Yes`
+
+**Success Response `200`**
+```json
+{ "success": true, "message": "Post unliked" }
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `404` | Post not found |
+| `409` | Post not liked yet |
+| `500` | Internal server error |
+
+---
+
+### Bookmark a Post
+
+**POST** `/posts/:postId/bookmark`
+
+Requires Authentication: `Yes`
+
+**Success Response `201`**
+```json
+{ "success": true, "message": "Post bookmarked" }
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `404` | Post not found |
+| `409` | Post already bookmarked |
+| `500` | Internal server error |
+
+---
+
+### Unbookmark a Post
+
+**DELETE** `/posts/:postId/bookmark`
+
+Requires Authentication: `Yes`
+
+**Success Response `200`**
+```json
+{ "success": true, "message": "Post unbookmarked" }
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `404` | Post not found |
+| `409` | Post not bookmarked yet |
+| `500` | Internal server error |
+---
+### Get My Likes
+
+**GET** `/users/me/likes`
+
+Requires Authentication: `Yes`
+
+**Query Parameters**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `page` | number | 1 | Page number |
+| `limit` | number | 10 | Records per page (max 50) |
+
+**Success Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "likes": [
+      {
+        "id": "uuid",
+        "createdAt": "2026-03-18T10:00:00.000Z",
+        "post": {
+          "id": "uuid",
+          "content": "BTC looks bullish",
+          "mediaUrls": [],
+          "postType": "post",
+          "likesCount": 12,
+          "commentsCount": 3,
+          "repostsCount": 1,
+          "bookmarksCount": 5,
+          "createdAt": "2026-03-18T10:00:00.000Z",
+          "originalPostId": null,
+          "originalPost": null,
+          "trade": null,
+          "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false }
+        }
+      }
+    ],
+    "pagination": { "total": 20, "page": 1, "limit": 10, "totalPages": 2, "hasNextPage": true, "hasPrevPage": false }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Invalid page number |
+| `400` | Limit must be between 1 and 50 |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+
+---
+
+### Get My Bookmarks
+
+**GET** `/users/me/bookmarks`
+
+Requires Authentication: `Yes`
+
+**Query Parameters**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `page` | number | 1 | Page number |
+| `limit` | number | 10 | Records per page (max 50) |
+
+**Success Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "bookmarks": [
+      {
+        "id": "uuid",
+        "createdAt": "2026-03-18T10:00:00.000Z",
+        "post": {
+          "id": "uuid",
+          "content": "ETH breakout incoming",
+          "mediaUrls": [],
+          "postType": "repost",
+          "likesCount": 8,
+          "commentsCount": 1,
+          "repostsCount": 2,
+          "bookmarksCount": 3,
+          "createdAt": "2026-03-18T10:00:00.000Z",
+          "originalPostId": "uuid",
+          "originalPost": {
+            "id": "uuid",
+            "content": "original post content",
+            "mediaUrls": [],
+            "createdAt": "2026-03-17T10:00:00.000Z",
+            "user": { "id": "uuid", "username": "satoshi", "avatarUrl": null, "isVerified": true }
+          },
+          "trade": null,
+          "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false }
+        }
+      }
+    ],
+    "pagination": { "total": 15, "page": 1, "limit": 10, "totalPages": 2, "hasNextPage": true, "hasPrevPage": false }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Invalid page number |
+| `400` | Limit must be between 1 and 50 |
+| `401` | Unauthorized |
+| `500` | Internal server error |
+---
+### Create Comment
+
+**POST** `/posts/:postId/comments`
+
+Requires Authentication: `Yes`
+
+**Request Body**
+```json
+{ "content": "Great trade setup!" }
+```
+
+**Success Response `201`**
+```json
+{
+  "success": true,
+  "data": {
+    "comment": {
+      "id": "uuid",
+      "content": "Great trade setup!",
+      "postId": "uuid",
+      "parentId": null,
+      "createdAt": "2026-03-18T10:00:00.000Z",
+      "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false }
+    }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Content is required |
+| `400` | Comment cannot exceed 500 characters |
+| `401` | Unauthorized |
+| `404` | Post not found |
+| `500` | Internal server error |
+
+---
+
+### Get Post Comments
+
+**GET** `/posts/:postId/comments`
+
+Requires Authentication: `Yes`
+
+**Query Parameters**
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `page` | number | 1 | Page number |
+| `limit` | number | 10 | Records per page (max 50) |
+
+**Success Response `200`**
+```json
+{
+  "success": true,
+  "data": {
+    "comments": [
+      {
+        "id": "uuid",
+        "content": "Great trade setup!",
+        "postId": "uuid",
+        "createdAt": "2026-03-18T10:00:00.000Z",
+        "repliesCount": 2,
+        "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false, "role": "user" }
+      }
+    ],
+    "pagination": { "total": 20, "page": 1, "limit": 10, "totalPages": 2, "hasNextPage": true, "hasPrevPage": false }
+  }
+}
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `400` | Invalid page number |
+| `400` | Limit must be between 1 and 50 |
+| `401` | Unauthorized |
+| `404` | Post not found |
+| `500` | Internal server error |
+
+---
+
+### Delete Comment
+
+**DELETE** `/posts/:postId/comments/:commentId`
+
+Requires Authentication: `Yes`
+
+**Success Response `200`**
+```json
+{ "success": true, "message": "Comment deleted" }
+```
+
+**Error Responses**
+| Status | Message |
+|---|---|
+| `401` | Unauthorized |
+| `403` | You can only delete your own comments |
+| `404` | Post not found |
+| `404` | Comment not found |
+| `500` | Internal server error |
+
+---
 ## Portfolio
 
 ### Portfolio table store initialValue and Balance (initialValue is fixed and Balance is updated when trade is closed only)

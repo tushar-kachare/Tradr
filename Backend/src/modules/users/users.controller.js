@@ -616,7 +616,7 @@ const getUserPortfolio = async (req, res) => {
     const availableValue = balance - allocatedValue;
 
     const portfolioPnL = parseFloat(
-      (((balance - initialValue) / initialValue) * 100).toFixed(2)
+      (((balance - initialValue) / initialValue) * 100).toFixed(2),
     );
 
     return res.status(200).json({
@@ -641,6 +641,441 @@ const getUserPortfolio = async (req, res) => {
   }
 };
 
+const getUserTrades = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const { page = 1, limit = 10, status } = req.query;
+
+    // Validate pagination params
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    if (isNaN(pageNum) || pageNum < 1) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid page number" });
+    }
+
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Limit must be between 1 and 50" });
+    }
+
+    // Validate status filter if provided
+    const validStatuses = ["open", "closed"];
+    if (status && !validStatuses.includes(status)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Status must be 'open' or 'closed'" });
+    }
+
+    // Check if target user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true },
+    });
+
+    if (!targetUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Build filter
+    const where = {
+      portfolio: { userId: targetUser.id },
+      isDeleted: false,
+      ...(status && { status }),
+    };
+
+    const skip = (pageNum - 1) * limitNum;
+
+    // Fetch trades + total count in parallel
+    const [trades, total] = await Promise.all([
+      prisma.trade.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          tradingPair: true,
+          tradeType: true,
+          status: true,
+          entryPrice: true,
+          exitPrice: true,
+          positionSize: true,
+          leverage: true,
+          riskReward: true,
+          holdTime: true,
+          createdAt: true,
+          closedAt: true,
+          portfolio: {
+            select: {
+              currency: true,
+              user: {
+                select: { id: true, username: true, avatarUrl: true },
+              },
+            },
+          },
+        },
+      }),
+      prisma.trade.count({ where }),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: { id: targetUser.id, username: targetUser.username },
+        trades,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: pageNum < Math.ceil(total / limitNum),
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("getUserTrades error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getMyLikes = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { page = 1, limit = 10 } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    if (isNaN(pageNum) || pageNum < 1) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid page number" });
+    }
+
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Limit must be between 1 and 50" });
+    }
+
+    const skip = (pageNum - 1) * limitNum;
+
+    const [likes, total] = await Promise.all([
+      prisma.like.findMany({
+        where: { userId },
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          createdAt: true,
+          post: {
+            select: {
+              id: true,
+              content: true,
+              mediaUrls: true,
+              postType: true,
+              likesCount: true,
+              commentsCount: true,
+              repostsCount: true,
+              bookmarksCount: true,
+              createdAt: true,
+              isDeleted: true,
+              originalPostId: true, // ← add this
+              originalPost: {
+                // ← add this
+                select: {
+                  id: true,
+                  content: true,
+                  mediaUrls: true,
+                  createdAt: true,
+                  user: {
+                    select: {
+                      id: true,
+                      username: true,
+                      avatarUrl: true,
+                      isVerified: true,
+                    },
+                  },
+                },
+              },
+              trade: {
+                select: {
+                  id: true,
+                  tradingPair: true,
+                  tradeType: true,
+                  status: true,
+                  entryPrice: true,
+                  exitPrice: true,
+                },
+              },
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatarUrl: true,
+                  role: true,
+                  isVerified: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.like.count({ where: { userId } }),
+    ]);
+
+    // Filter out soft deleted posts
+    const filteredLikes = likes.filter((like) => !like.post.isDeleted);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        likes: filteredLikes,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: pageNum < Math.ceil(total / limitNum),
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("getMyLikes error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getMyBookmarks = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { page = 1, limit = 10 } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    if (isNaN(pageNum) || pageNum < 1) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid page number" });
+    }
+
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Limit must be between 1 and 50" });
+    }
+
+    const skip = (pageNum - 1) * limitNum;
+
+    const [bookmarks, total] = await Promise.all([
+      prisma.bookmark.findMany({
+        where: { userId },
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          createdAt: true,
+          post: {
+            select: {
+              id: true,
+              content: true,
+              mediaUrls: true,
+              postType: true,
+              likesCount: true,
+              commentsCount: true,
+              repostsCount: true,
+              bookmarksCount: true,
+              createdAt: true,
+              isDeleted: true,
+              originalPostId: true, // ← add this
+              originalPost: {
+                // ← add this
+                select: {
+                  id: true,
+                  content: true,
+                  mediaUrls: true,
+                  createdAt: true,
+                  user: {
+                    select: {
+                      id: true,
+                      username: true,
+                      avatarUrl: true,
+                      isVerified: true,
+                    },
+                  },
+                },
+              },
+              trade: {
+                select: {
+                  id: true,
+                  tradingPair: true,
+                  tradeType: true,
+                  status: true,
+                  entryPrice: true,
+                  exitPrice: true,
+                },
+              },
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  avatarUrl: true,
+                  role: true,
+                  isVerified: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.bookmark.count({ where: { userId } }),
+    ]);
+
+    // Filter out soft deleted posts
+    const filteredBookmarks = bookmarks.filter(
+      (bookmark) => !bookmark.post.isDeleted,
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        bookmarks: filteredBookmarks,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: pageNum < Math.ceil(total / limitNum),
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("getMyBookmarks error:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+const searchUser = async (req, res) => {
+  try {
+    const { q, page = 1, limit = 10 } = req.query;
+    const currentUserId = req.user.userId;
+
+    // validate search query
+    if (!q || q.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Search query is required" });
+    }
+
+    if (q.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query must be at least 2 characters",
+      });
+    }
+
+    if (q.trim().length > 30) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query cannot exceed 30 characters",
+      });
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    if (isNaN(pageNum) || pageNum < 1) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid page number" });
+    }
+
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Limit must be between 1 and 50" });
+    }
+
+    const skip = (pageNum - 1) * limitNum;
+
+    const where = {
+      username: {
+        contains: q.trim(),
+        mode: "insensitive",
+      },
+      isActive: true,
+    };
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { followersCount: "desc" }, // most followed first
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          role: true,
+          isVerified: true,
+          followersCount: true,
+          followingCount: true,
+          // check if current user follows each result
+          followers: {
+            where: { followerId: currentUserId },
+            select: { id: true },
+          },
+        },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    // Format isFollowing flag
+    const formattedUsers = users.map((user) => ({
+      ...user,
+      isFollowing: user.followers.length > 0,
+      followers: undefined,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        users: formattedUsers,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+          hasNextPage: pageNum < Math.ceil(total / limitNum),
+          hasPrevPage: pageNum > 1,
+        },
+      },
+    });
+  } catch (err) {
+    console.error("searchUsers error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
 module.exports = {
   me,
   getUserByUsername,
@@ -652,4 +1087,8 @@ module.exports = {
   getFollowing,
   getUserPosts,
   getUserPortfolio,
+  getUserTrades,
+  getMyLikes,
+  getMyBookmarks,
+  searchUser,
 };
