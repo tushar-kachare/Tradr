@@ -151,6 +151,43 @@ No body required.
 
 ---
 
+## Update Avatar
+
+**PATCH** `/api/users/me/avatar`
+🔒 Requires authentication
+📎 Content-Type: multipart/form-data
+
+**Request Body**
+
+| Field    | Type | Required | Description                          |
+| -------- | ---- | -------- | ------------------------------------ |
+| `avatar` | file | ✅       | Image file (jpg, jpeg, png, max 5MB) |
+
+> If the user already has an avatar, the old one is automatically deleted from Cloudinary before the new one is uploaded.
+
+**Responses**
+
+| Status | Description                 |
+| ------ | --------------------------- |
+| `200`  | Avatar updated successfully |
+| `400`  | No file uploaded            |
+| `500`  | Internal server error       |
+
+**Response Body (200)**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "username": "tushar",
+    "avatarUrl": "https://res.cloudinary.com/your_cloud/image/upload/tradr/avatars/filename.jpg"
+  }
+}
+```
+
+---
+
 ### DELETE `/users/me`
 
 No body required.
@@ -260,7 +297,9 @@ Returns list of users that `:username` follows.
 | `500`  | `"Failed to fetch following"` |
 
 ---
+
 ### Search Users
+
 ---
 
 **GET** `/users/search?q=username`
@@ -275,6 +314,7 @@ Requires Authentication: `Yes`
 | `limit` | number | 10 | Records per page (max 50) |
 
 **Success Response `200`**
+
 ```json
 {
   "success": true,
@@ -291,7 +331,14 @@ Requires Authentication: `Yes`
         "isFollowing": false
       }
     ],
-    "pagination": { "total": 5, "page": 1, "limit": 10, "totalPages": 1, "hasNextPage": false, "hasPrevPage": false }
+    "pagination": {
+      "total": 5,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 1,
+      "hasNextPage": false,
+      "hasPrevPage": false
+    }
   }
 }
 ```
@@ -306,6 +353,7 @@ Requires Authentication: `Yes`
 | `400` | Limit must be between 1 and 50 |
 | `401` | Unauthorized |
 | `500` | Internal server error |
+
 ---
 
 ## Fetch Posts by User
@@ -383,6 +431,7 @@ Requires Authentication: `Yes`
 ### \*\*\* Update Profile is remained
 
 ---
+
 ### Get User Trades
 
 **GET** `/users/:username/trades`
@@ -397,6 +446,7 @@ Requires Authentication: `Yes`
 | `status` | string | - | Filter by `open` or `closed` |
 
 **Success Response `200`**
+
 ```json
 {
   "success": true,
@@ -443,6 +493,7 @@ Requires Authentication: `Yes`
 | `401` | Unauthorized |
 | `404` | User not found |
 | `500` | Internal server error |
+
 ---
 
 ## Posts
@@ -451,23 +502,33 @@ Requires Authentication: `Yes`
 
 **POST** `/api/posts/`
 🔒 Requires authentication
+📎 Content-Type: multipart/form-data
 
 **Request Body**
 
-| Field            | Type          | Required | Description                      |
-| ---------------- | ------------- | -------- | -------------------------------- |
-| `content`        | string        | ❌       | Post text / caption              |
-| `mediaUrls`      | string[]      | ❌       | Array of media URLs              |
-| `tradeId`        | string (uuid) | ❌       | Share a trade (trade share post) |
-| `originalPostId` | string (uuid) | ❌       | Repost or quote repost           |
+| Field            | Type          | Required | Description                                             |
+| ---------------- | ------------- | -------- | ------------------------------------------------------- |
+| `content`        | string        | ❌       | Post text / caption                                     |
+| `media`          | file[]        | ❌       | Upload images, videos, or PDFs (max 4 files, 20MB each) |
+| `tradeId`        | string (uuid) | ❌       | Share a trade (trade share post)                        |
+| `originalPostId` | string (uuid) | ❌       | Repost or quote repost                                  |
 
-> At least one of `content`, `mediaUrls`, `tradeId`, or `originalPostId` must be provided.
+> At least one of `content`, `media`, `tradeId`, or `originalPostId` must be provided.
+> Uploaded file URLs are stored in `mediaURLs` on the post after upload.
+
+**Supported File Types**
+
+| Type  | Formats             |
+| ----- | ------------------- |
+| Image | jpg, jpeg, png, gif |
+| Video | mp4, webm           |
+| Doc   | pdf                 |
 
 **Post Types**
 
 | Scenario     | Fields to send                 |
 | ------------ | ------------------------------ |
-| Regular post | `content` and/or `mediaUrls`   |
+| Regular post | `content` and/or `media`       |
 | Trade share  | `tradeId` + optional `content` |
 | Repost       | `originalPostId`               |
 | Quote repost | `originalPostId` + `content`   |
@@ -475,12 +536,14 @@ Requires Authentication: `Yes`
 **Responses**
 
 | Status | Description                                                                    |
-| ------ | ------------------------------------------------------------------------------ |
+| ------ | ------------------------------------------------------------------------------ | --- |
 | `201`  | Post created successfully                                                      |
 | `400`  | Empty post / `tradeId` and `originalPostId` sent together / reposting a repost |
 | `404`  | Trade or original post not found                                               |
 | `409`  | User already reposted this post                                                |
-| `500`  | Internal server error                                                          |
+| `500`  | Internal server error                                                          |     |
+
+---
 
 ## Delete Post
 
@@ -600,6 +663,7 @@ Requires Authentication: `Yes`
 > Only `content` and `mediaUrls` are editable. `postType`, `tradeId`, and `originalPostId` cannot be changed after creation. Plain reposts (reposts with no content) cannot be edited.
 
 ---
+
 ### Like a Post
 
 **POST** `/posts/:postId/like`
@@ -607,6 +671,7 @@ Requires Authentication: `Yes`
 Requires Authentication: `Yes`
 
 **Success Response `201`**
+
 ```json
 { "success": true, "message": "Post liked" }
 ```
@@ -627,6 +692,7 @@ Requires Authentication: `Yes`
 Requires Authentication: `Yes`
 
 **Success Response `200`**
+
 ```json
 { "success": true, "message": "Post unliked" }
 ```
@@ -647,6 +713,7 @@ Requires Authentication: `Yes`
 Requires Authentication: `Yes`
 
 **Success Response `201`**
+
 ```json
 { "success": true, "message": "Post bookmarked" }
 ```
@@ -667,6 +734,7 @@ Requires Authentication: `Yes`
 Requires Authentication: `Yes`
 
 **Success Response `200`**
+
 ```json
 { "success": true, "message": "Post unbookmarked" }
 ```
@@ -677,7 +745,9 @@ Requires Authentication: `Yes`
 | `404` | Post not found |
 | `409` | Post not bookmarked yet |
 | `500` | Internal server error |
+
 ---
+
 ### Get My Likes
 
 **GET** `/users/me/likes`
@@ -691,6 +761,7 @@ Requires Authentication: `Yes`
 | `limit` | number | 10 | Records per page (max 50) |
 
 **Success Response `200`**
+
 ```json
 {
   "success": true,
@@ -712,11 +783,23 @@ Requires Authentication: `Yes`
           "originalPostId": null,
           "originalPost": null,
           "trade": null,
-          "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false }
+          "user": {
+            "id": "uuid",
+            "username": "tushar",
+            "avatarUrl": null,
+            "isVerified": false
+          }
         }
       }
     ],
-    "pagination": { "total": 20, "page": 1, "limit": 10, "totalPages": 2, "hasNextPage": true, "hasPrevPage": false }
+    "pagination": {
+      "total": 20,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 2,
+      "hasNextPage": true,
+      "hasPrevPage": false
+    }
   }
 }
 ```
@@ -744,6 +827,7 @@ Requires Authentication: `Yes`
 | `limit` | number | 10 | Records per page (max 50) |
 
 **Success Response `200`**
+
 ```json
 {
   "success": true,
@@ -768,14 +852,31 @@ Requires Authentication: `Yes`
             "content": "original post content",
             "mediaUrls": [],
             "createdAt": "2026-03-17T10:00:00.000Z",
-            "user": { "id": "uuid", "username": "satoshi", "avatarUrl": null, "isVerified": true }
+            "user": {
+              "id": "uuid",
+              "username": "satoshi",
+              "avatarUrl": null,
+              "isVerified": true
+            }
           },
           "trade": null,
-          "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false }
+          "user": {
+            "id": "uuid",
+            "username": "tushar",
+            "avatarUrl": null,
+            "isVerified": false
+          }
         }
       }
     ],
-    "pagination": { "total": 15, "page": 1, "limit": 10, "totalPages": 2, "hasNextPage": true, "hasPrevPage": false }
+    "pagination": {
+      "total": 15,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 2,
+      "hasNextPage": true,
+      "hasPrevPage": false
+    }
   }
 }
 ```
@@ -787,7 +888,9 @@ Requires Authentication: `Yes`
 | `400` | Limit must be between 1 and 50 |
 | `401` | Unauthorized |
 | `500` | Internal server error |
+
 ---
+
 ### Create Comment
 
 **POST** `/posts/:postId/comments`
@@ -795,11 +898,13 @@ Requires Authentication: `Yes`
 Requires Authentication: `Yes`
 
 **Request Body**
+
 ```json
 { "content": "Great trade setup!" }
 ```
 
 **Success Response `201`**
+
 ```json
 {
   "success": true,
@@ -810,7 +915,12 @@ Requires Authentication: `Yes`
       "postId": "uuid",
       "parentId": null,
       "createdAt": "2026-03-18T10:00:00.000Z",
-      "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false }
+      "user": {
+        "id": "uuid",
+        "username": "tushar",
+        "avatarUrl": null,
+        "isVerified": false
+      }
     }
   }
 }
@@ -840,6 +950,7 @@ Requires Authentication: `Yes`
 | `limit` | number | 10 | Records per page (max 50) |
 
 **Success Response `200`**
+
 ```json
 {
   "success": true,
@@ -851,10 +962,23 @@ Requires Authentication: `Yes`
         "postId": "uuid",
         "createdAt": "2026-03-18T10:00:00.000Z",
         "repliesCount": 2,
-        "user": { "id": "uuid", "username": "tushar", "avatarUrl": null, "isVerified": false, "role": "user" }
+        "user": {
+          "id": "uuid",
+          "username": "tushar",
+          "avatarUrl": null,
+          "isVerified": false,
+          "role": "user"
+        }
       }
     ],
-    "pagination": { "total": 20, "page": 1, "limit": 10, "totalPages": 2, "hasNextPage": true, "hasPrevPage": false }
+    "pagination": {
+      "total": 20,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 2,
+      "hasNextPage": true,
+      "hasPrevPage": false
+    }
   }
 }
 ```
@@ -877,6 +1001,7 @@ Requires Authentication: `Yes`
 Requires Authentication: `Yes`
 
 **Success Response `200`**
+
 ```json
 { "success": true, "message": "Comment deleted" }
 ```
@@ -891,6 +1016,7 @@ Requires Authentication: `Yes`
 | `500` | Internal server error |
 
 ---
+
 ## Portfolio
 
 ### Portfolio table store initialValue and Balance (initialValue is fixed and Balance is updated when trade is closed only)

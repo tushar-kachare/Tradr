@@ -1,5 +1,7 @@
 const prisma = require("../../config/db");
 
+const { cloudinary, uploadAvatar } = require("../../config/cloudinary");
+
 const me = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -1076,6 +1078,37 @@ const searchUser = async (req, res) => {
       .json({ success: false, message: "Internal server error" });
   }
 };
+
+// PATCH /users/me/avatar
+const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
+    }
+
+    const avatarUrl = req.file.path; // Cloudinary URL from multer-storage-cloudinary
+
+    // If user already has an avatar, delete the old one from Cloudinary
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (user.avatarUrl) {
+      const publicId = user.avatarUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(`tradr/avatars/${publicId}`);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { avatarUrl },
+      select: { id: true, username: true, avatarUrl: true },
+    });
+
+    return res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   me,
   getUserByUsername,
@@ -1091,4 +1124,5 @@ module.exports = {
   getMyLikes,
   getMyBookmarks,
   searchUser,
+  updateAvatar,
 };

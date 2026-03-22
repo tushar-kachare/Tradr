@@ -4,7 +4,9 @@ const createPost = async (req, res) => {
   // frontend should send => {content? , tradeId? , originalPostId?, mediaUrls?}
   try {
     const userId = req.user.userId;
-    const { content, tradeId, originalPostId, mediaUrls } = req.body;
+    const { content, tradeId, originalPostId } = req.body;
+
+    const mediaUrls = req.files ? req.files.map((f) => f.path) : [];
 
     if (tradeId) {
       // it is repost on trade
@@ -785,12 +787,10 @@ const createComment = async (req, res) => {
     }
 
     if (content.length > 500) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Comment cannot exceed 500 characters",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Comment cannot exceed 500 characters",
+      });
     }
 
     // Check if post exists
@@ -853,11 +853,15 @@ const getComments = async (req, res) => {
     const limitNum = parseInt(limit);
 
     if (isNaN(pageNum) || pageNum < 1) {
-      return res.status(400).json({ success: false, message: "Invalid page number" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid page number" });
     }
 
     if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
-      return res.status(400).json({ success: false, message: "Limit must be between 1 and 50" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Limit must be between 1 and 50" });
     }
 
     // Check if post exists
@@ -867,7 +871,9 @@ const getComments = async (req, res) => {
     });
 
     if (!post || post.isDeleted) {
-      return res.status(404).json({ success: false, message: "Post not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
     }
 
     const skip = (pageNum - 1) * limitNum;
@@ -876,7 +882,7 @@ const getComments = async (req, res) => {
       prisma.comment.findMany({
         where: {
           postId,
-          parentId: null,       // top level comments only
+          parentId: null, // top level comments only
           isDeleted: false,
         },
         skip,
@@ -932,7 +938,9 @@ const getComments = async (req, res) => {
     });
   } catch (error) {
     console.error("getComments error:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -948,22 +956,37 @@ const deleteComment = async (req, res) => {
     });
 
     if (!post || post.isDeleted) {
-      return res.status(404).json({ success: false, message: "Post not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
     }
 
     // Check if comment exists
     const comment = await prisma.comment.findUnique({
       where: { id: commentId },
-      select: { id: true, userId: true, postId: true, parentId: true, isDeleted: true },
+      select: {
+        id: true,
+        userId: true,
+        postId: true,
+        parentId: true,
+        isDeleted: true,
+      },
     });
 
     if (!comment || comment.isDeleted) {
-      return res.status(404).json({ success: false, message: "Comment not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Comment not found" });
     }
 
     // Check ownership
     if (comment.userId !== userId) {
-      return res.status(403).json({ success: false, message: "You can only delete your own comments" });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "You can only delete your own comments",
+        });
     }
 
     // Soft delete comment + decrement commentsCount atomically
@@ -981,9 +1004,12 @@ const deleteComment = async (req, res) => {
     return res.status(200).json({ success: true, message: "Comment deleted" });
   } catch (error) {
     console.error("deleteComment error:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
+
 module.exports = {
   createPost,
   deletePost,

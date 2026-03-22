@@ -1,10 +1,16 @@
 const express = require("express");
+const { uploadPostMedia } = require("../../config/cloudinary");
 const authenticate = require("../middlewares/auth.middleware");
 const postController = require("./posts.controller");
 const { post } = require("../../config/db");
 const router = express.Router();
 
-router.post("/", authenticate, postController.createPost);
+router.post(
+  "/",
+  authenticate,
+  uploadPostMedia.array("media", 4),
+  postController.createPost,
+);
 router.get("/feed", authenticate, postController.getFeed);
 router.get("/explore", authenticate, postController.getExplore);
 router.get("/:postId", authenticate, postController.getPost);

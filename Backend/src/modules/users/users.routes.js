@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { uploadAvatar } = require('../../config/cloudinary');
 
 const authenticate = require("../middlewares/auth.middleware");
 const usersController = require("./users.controller");
@@ -9,6 +10,7 @@ router.delete("/me", authenticate, usersController.deleteMe);
 router.patch("/me/password", authenticate, usersController.changePassword);
 router.get("/me/likes", authenticate, usersController.getMyLikes);
 router.get("/me/bookmarks", authenticate, usersController.getMyBookmarks);
+router.patch('/me/avatar' , authenticate , uploadAvatar.single('avatar') , usersController.updateAvatar)
 router.get("/search", authenticate, usersController.searchUser);
 // ** Keep dynamic API at bottom ** //
 router.post("/:username/follow", authenticate, usersController.followUser);
