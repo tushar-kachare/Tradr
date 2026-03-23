@@ -37,8 +37,6 @@ Tradr_Backend/
 │   │
 │   ├── middlewares/
 │   │   ├── auth.middleware.js  → JWT verification
-│   │   ├── error.middleware.js → global error handler
-│   │   └── validate.middleware.js → request validation
 │   │
 │   ├── utils/
 │   │   ├── jwt.js             → generate/verify JWT
@@ -52,3 +50,81 @@ Tradr_Backend/
 ├── .gitignore
 ├── package.json
 └── server.js                  → entry point, starts server
+
+
+*** React.js ***
+cd Tradr/frontend
+npm create vite@latest . -- --template react
+npm install
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+npm install react-router-dom
+npm install @tanstack/react-query
+npm install axios
+```
+
+---
+
+## Updated Folder Structure for React + Vite
+```
+Tradr/frontend/
+├── src/
+│   ├── main.jsx                  # Entry point
+│   ├── App.jsx                   # Routes defined here
+│   ├── pages/                    # One file per page
+│   │   ├── Feed.jsx
+│   │   ├── Explore.jsx
+│   │   ├── Search.jsx
+│   │   ├── Login.jsx
+│   │   ├── Register.jsx
+│   │   ├── Profile.jsx
+│   │   ├── TradeDetail.jsx
+│   │   ├── Bookmarks.jsx
+│   │   └── Settings.jsx
+│   ├── components/
+│   │   ├── ui/
+│   │   │   ├── Button.jsx
+│   │   │   ├── Avatar.jsx
+│   │   │   ├── Modal.jsx
+│   │   │   ├── Spinner.jsx
+│   │   │   └── Input.jsx
+│   │   ├── layout/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   └── RightPanel.jsx
+│   │   ├── post/
+│   │   │   ├── PostCard.jsx
+│   │   │   ├── PostList.jsx
+│   │   │   ├── CreatePostModal.jsx
+│   │   │   └── PostActions.jsx
+│   │   ├── trade/
+│   │   │   ├── TradeCard.jsx
+│   │   │   ├── TradeList.jsx
+│   │   │   ├── CreateTradeModal.jsx
+│   │   │   └── TradeDetail.jsx
+│   │   └── profile/
+│   │       ├── ProfileHeader.jsx
+│   │       ├── ProfileTabs.jsx
+│   │       └── FollowButton.jsx
+│   ├── context/
+│   │   ├── AuthContext.jsx
+│   │   └── CryptoContext.jsx
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useFeed.js
+│   │   ├── useTrades.js
+│   │   └── useProfile.js
+│   ├── lib/
+│   │   ├── api/
+│   │   │   ├── auth.js
+│   │   │   ├── posts.js
+│   │   │   ├── trades.js
+│   │   │   ├── users.js
+│   │   │   ├── search.js
+│   │   │   └── crypto.js
+│   │   └── utils.js
+│   └── assets/
+│       └── logo.svg
+├── index.html
+├── tailwind.config.js
+└── vite.config.js
