@@ -1156,7 +1156,6 @@ Requires Authentication: `Yes`
 |---|---|---|---|
 | `coin` | string | ✅ | Coin symbol e.g. `"BTC"` |
 | `tradeType` | string | ✅ | `"long"` or `"short"` |
-| `entryPrice` | number | ✅ | Price at entry |
 | `positionSize` | number | ✅ | % of portfolio e.g. `20` |
 | `targetPrice` | number | ❌ | Target exit price |
 | `stopLoss` | number | ❌ | Stop loss price |
@@ -1264,14 +1263,27 @@ Requires Authentication: `Yes`
 
 Requires Authentication: `Yes`
 
-**Request Body**
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `exitPrice` | number | ✅ | Actual exit price |
+---
 
-**Success Response `200`**
+### Request Body
 
-```json
+_No body required_
+
+---
+
+### Important Notes
+
+- `exitPrice` is **NOT provided by client**
+- It is automatically fetched from **live market price (WebSocket)** at the time of closing
+- This endpoint supports:
+  - Manual close (user action)
+  - Automatic close (SL/TP via trade engine)
+
+---
+
+### Success Response `200`
+
+````json
 {
   "success": true,
   "message": "Trade closed successfully.",
@@ -1292,7 +1304,6 @@ Requires Authentication: `Yes`
     "newPortfolioBalance": 10200.0
   }
 }
-```
 
 **Error Responses**
 | Status | Message |
@@ -1340,12 +1351,141 @@ Requires Authentication: `No`
     "user": { "username": "tushar", "avatarUrl": null }
   }
 }
-```
+````
 
 **Error Responses**
 | Status | Message |
 |---|---|
 | `404` | Trade not found |
 | `500` | Internal server error |
+
+---
+
+### Services
+
+---
+
+### Price Service (WebSocket Live Price Stream)
+
+**Background Service** (No HTTP Endpoint)
+
+Maintains real-time cryptocurrency prices using Binance WebSocket and stores them in memory for fast access.
+
+---
+
+### Description
+
+- Connects to Binance WebSocket
+- Subscribes to multiple trading pairs (e.g. BTCUSDT, ETHUSDT)
+- Stores latest prices in **in-memory object**
+- Provides utility functions to access prices
+
+---
+
+### Execution Flow
+
+```text
+Server starts
+    ↓
+startPriceStream(symbols)
+    ↓
+Connect to Binance WebSocket
+    ↓
+Receive live price updates
+    ↓
+Store in memory (prices object)
+    ↓
+Used by:
+   - Trade Engine (SL/TP checks)
+   - Trade Service (entry/exit price)
+```
+
+---
+
+### Trade Engine (Auto SL/TP Execution)
+
+**Background Service** (No HTTP Endpoint)
+
+Runs continuously in backend to automatically monitor and close trades based on Stop Loss (SL) and Take Profit (TP).
+
+---
+
+### Description
+
+- Fetches all **open trades**
+- Reads **live market prices** from WebSocket (in-memory)
+- Compares price with:
+  - `stopLoss`
+  - `targetPrice`
+- Automatically closes trade when conditions are met
+
+---
+
+### Execution Flow
+
+```text
+WebSocket → updates prices
+        ↓
+Trade Engine loop (runs every 1 second)
+        ↓
+Fetch open trades from DB
+        ↓
+Compare current price with SL/TP
+        ↓
+If condition met → closeTradeService()
+        ↓
+Trade status updated to "closed"
+```
+
+---
+
+### Trade Service (Close Trade Logic)
+
+**Service Layer** (No HTTP Endpoint)
+
+Handles the core business logic for closing a trade.  
+Used by both:
+
+- Manual close (API controller)
+- Automatic close (Trade Engine)
+
+---
+
+### Description
+
+- Fetches trade from database
+- Gets **live exit price** from WebSocket (in-memory)
+- Validates ownership (for manual requests)
+- Calculates profit/loss
+- Updates:
+  - Trade status → `closed`
+  - Portfolio balance
+- Returns updated trade and summary
+
+---
+
+### Execution Flow
+
+```text
+Controller / Trade Engine
+        ↓
+closeTradeService()
+        ↓
+Fetch trade from DB
+        ↓
+Get live price (exitPrice)
+        ↓
+Validate trade + ownership
+        ↓
+Calculate PnL
+        ↓
+DB Transaction:
+   - Update trade
+   - Update portfolio balance
+        ↓
+Return result
+```
+
+---
 
 > _Last updated: March 2026_

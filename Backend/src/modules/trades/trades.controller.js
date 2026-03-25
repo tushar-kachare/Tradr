@@ -1,11 +1,13 @@
 const prisma = require("../../config/db");
+const { getPrice } = require("../../services/price.service");
+const { closeTradeService } = require("../../services/trade.service");
+
 const createTrade = async (req, res) => {
   try {
     const userId = req.user.userId;
     let {
       coin,
       tradeType,
-      entryPrice,
       targetPrice,
       stopLoss,
       positionSize,
@@ -15,7 +17,16 @@ const createTrade = async (req, res) => {
       tradingPair,
     } = req.body;
 
-    entryPrice = parseFloat(req.body.entryPrice);
+    const symbol = `${coin}USDT`;
+    const entryPrice = getPrice(symbol);
+
+    if (!entryPrice) {
+      return res.status(500).json({
+        success: false,
+        message: "Live price not available. Try again.",
+      });
+    }
+
     targetPrice = req.body.targetPrice
       ? parseFloat(req.body.targetPrice)
       : null;
@@ -292,113 +303,22 @@ const getTradeById = async (req, res) => {
 
 const closeTrade = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { id } = req.params;
-    const exitPrice = parseFloat(req.body.exitPrice);
-
-    // Validate exitPrice
-    if (!exitPrice || isNaN(exitPrice)) {
-      return res.status(400).json({
-        success: false,
-        message: "exitPrice is required.",
-      });
-    }
-
-    // find the trade;
-    const trade = await prisma.trade.findUnique({
-      where: { id, isDeleted: false },
+    const result = await closeTradeService({
+      tradeId: req.params.id,
+      userId: req.user.userId,
     });
-
-    if (!trade) {
-      return res.status(404).json({
-        success: false,
-        message: "Trade not found.",
-      });
-    }
-
-    // check ownership
-    if (trade.userId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to close this trade.",
-      });
-    }
-
-    // cannot close 'close' or 'cancelled' trade
-    if (trade.status !== "open") {
-      return res.status(400).json({
-        success: false,
-        message: `Trade is already ${trade.status}.`,
-      });
-    }
-
-    const entryPrice = parseFloat(trade.entryPrice);
-    const actualAmount = parseFloat(trade.actualAmount);
-    const leverage = trade.leverage;
-
-    let profitLoss;
-    if (trade.tradeType === "long") {
-      profitLoss = ((exitPrice - entryPrice) / entryPrice) * 100 * leverage;
-    } else {
-      profitLoss = ((entryPrice - exitPrice) / entryPrice) * 100 * leverage;
-    }
-
-    profitLoss = parseFloat(profitLoss.toFixed(2));
-
-    const actualGain = actualAmount * (profitLoss / 100);
-
-    // Fetch portfolio
-    const portfolio = await prisma.portfolio.findUnique({
-      where: { id: trade.portfolioId },
-    });
-
-    if (!portfolio) {
-      return res.status(404).json({
-        success: false,
-        message: "Portfolio not found.",
-      });
-    }
-
-    // Transaction — update trade and portfolio together
-    const [updatedTrade] = await prisma.$transaction([
-      prisma.trade.update({
-        where: { id },
-        data: {
-          status: "closed",
-          exitPrice,
-          profitLoss,
-          closedAt: new Date(),
-        },
-        include: {
-          coin: { select: { symbol: true, name: true, logoUrl: true } },
-          user: { select: { username: true, avatarUrl: true } },
-        },
-      }),
-      prisma.portfolio.update({
-        where: { id: portfolio.id },
-        data: {
-          balance: {increment: actualGain},
-        },
-      }),
-    ]);
 
     return res.status(200).json({
       success: true,
       message: "Trade closed successfully.",
-      trade: updatedTrade,
-      summary: {
-        entryPrice,
-        exitPrice,
-        profitLoss: `${profitLoss}%`,
-        actualGain: parseFloat(actualGain.toFixed(2)),
-        newPortfolioBalance: parseFloat(newBalance.toFixed(2)),
-      },
+      trade: result.trade,
+      summary: result.summary,
     });
   } catch (err) {
     console.error("closeTrade error:", err);
-    return res.status(500).json({
+    return res.status(err.statusCode || 500).json({
       success: false,
-      message: "Internal server error.",
+      message: err.message,
     });
   }
 };
