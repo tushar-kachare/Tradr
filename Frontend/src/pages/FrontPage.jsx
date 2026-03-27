@@ -4,16 +4,23 @@ import Sidebar from "../components/layout/Sidebar";
 
 const FrontPage = () => {
   return (
-    <div className="flex bg-[#0f0f0f] h-screen p-10 text-white overflow-hidden">
-      <div className="w-1/5 border-r border-gray-800">
+    <div className="flex bg-[#0f0f0f] h-screen  text-white overflow-hidden">
+      
+      {/* Sidebar */}
+      <div className="w-[18%] border-r border-gray-800 p-6">
         <Sidebar />
       </div>
-      <div className="flex-1 max-w-[700px] overflow-y-auto border-x border-[#21262d]">
+
+      {/* Feed Section (WIDER) */}
+      <div className="w-[60%] overflow-y-auto border-x border-[#21262d] p-6">
         <FeedSection />
       </div>
-      <div className="w-1/5 border-l border-gray-800">
+
+      {/* Right Panel (SMALLER) */}
+      <div className="w-[22%] border-l border-gray-800 p-6">
         <RightPanel />
       </div>
+
     </div>
   );
 };

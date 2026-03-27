@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const authRouter = require("./modules/auth/auth.routes");
 const usersRouter = require("./modules/users/users.routes");
@@ -7,6 +8,12 @@ const tradesRouter = require("./modules/trades/trades.routes");
 const portfolioRouter = require("./modules/portfolio/portfolio.routes");
 
 const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

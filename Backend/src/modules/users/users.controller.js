@@ -24,7 +24,7 @@ const me = async (req, res) => {
         updatedAt: true,
       },
     });
-
+    
     return res.status(200).json({
       success: true,
       user,
