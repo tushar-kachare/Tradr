@@ -1,11 +1,8 @@
 import { useState } from "react";
 
-const FeedTabs = () => {
-  const [activeTab, setActiveTab] = useState("explore");
-
+const FeedTabs = ({ activeTab, setActiveTab }) => {
   return (
     <div className="w-full flex justify-center gap-6">
-      
       {/* Explore Tab */}
       <button
         onClick={() => setActiveTab("explore")}
@@ -31,7 +28,6 @@ const FeedTabs = () => {
       >
         Following
       </button>
-
     </div>
   );
 };

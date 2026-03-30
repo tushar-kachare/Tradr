@@ -1,54 +1,68 @@
 const PostContent = ({ content, media = [] }) => {
+  const getType = (url) => {
+    if (!url) return null;
+
+    const lowerUrl = url.toLowerCase();
+
+    if (lowerUrl.match(/\.(jpg|jpeg|png|webp|gif)$/)) return "image";
+    if (lowerUrl.match(/\.(mp4|webm|ogg)$/)) return "video";
+    if (lowerUrl.match(/\.(pdf)$/)) return "pdf";
+
+    return "unknown";
+  };
+
   return (
     <div className="mt-3 space-y-3">
-      
-      {/* TEXT CONTENT */}
-      {true && (
+      {content && (
         <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-          Lorem, ipsum dolor sit amet consectetur adipisicing elit. Vitae quisquam, cumque qui amet laudantium modi quia molestias nihil rem consequuntur ab accusantium ipsa temporibus sunt eos nulla soluta unde animi.
+          {content}
         </p>
       )}
 
-      {/* MEDIA CONTENT */}
       {media.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
-          {media.map((file, index) => {
-            const type = file.type;
+        <div
+          className={`grid gap-2 ${
+            media.length === 1 ? "grid-cols-1" : "grid-cols-2"
+          }`}
+        >
+          {media.map((url, index) => {
+            const type = getType(url);
 
-            // IMAGE
             if (type === "image") {
               return (
                 <img
                   key={index}
-                  src={file.url}
+                  src={url}
                   alt="post-media"
-                  className="rounded-lg object-cover w-full h-40"
+                  className={`w-full rounded-xl object-cover ${
+                    media.length === 1 ? "max-h-[420px]" : "h-40"
+                  }`}
                 />
               );
             }
 
-            // VIDEO
             if (type === "video") {
               return (
                 <video
                   key={index}
                   controls
-                  className="rounded-lg w-full h-40 object-cover"
+                  className={`w-full rounded-xl object-cover ${
+                    media.length === 1 ? "max-h-[420px]" : "h-40"
+                  }`}
                 >
-                  <source src={file.url} />
+                  <source src={url} />
                 </video>
               );
             }
 
-            // PDF
             if (type === "pdf") {
               return (
                 <a
                   key={index}
-                  href={file.url}
+                  href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg bg-[#1f1f1f] hover:bg-[#2a2a2a] transition"
+                  className="flex items-center justify-between rounded-xl bg-[#1f1f1f] p-3 transition hover:bg-[#2a2a2a]"
                 >
                   <span className="text-gray-300 text-sm">📄 PDF Document</span>
                   <span className="text-blue-400 text-xs">Open</span>
@@ -56,7 +70,17 @@ const PostContent = ({ content, media = [] }) => {
               );
             }
 
-            return null;
+            return (
+              <a
+                key={index}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-gray-300 transition hover:bg-white/10"
+              >
+                Open attachment
+              </a>
+            );
           })}
         </div>
       )}

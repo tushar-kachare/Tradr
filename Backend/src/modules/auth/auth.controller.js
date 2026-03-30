@@ -5,7 +5,8 @@ const jwt = require("jsonwebtoken");
 async function register(req, res) {
   try {
     const { username, email, password } = req.body;
-
+    console.log(username , email , password);
+    
     // check missing fields
     if (!username || !email || !password) {
       return res.status(400).json({
@@ -21,13 +22,12 @@ async function register(req, res) {
       },
     });
 
+    console.log(existingUser);
+    
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: {
-          code: "EMAIL_ALREADY_EXISTS",
-          message: "An account with this email already exists",
-        },
+        message:"An account with this email already exists",
       });
     }
 

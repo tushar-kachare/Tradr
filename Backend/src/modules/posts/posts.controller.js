@@ -260,6 +260,34 @@ const getFeed = async (req, res) => {
         },
       },
     });
+    const postIds = posts.map((p) => p.id);
+
+    const userLikes = await prisma.like.findMany({
+      where: {
+        userId,
+        postId: { in: postIds },
+      },
+      select: { postId: true },
+    });
+
+    const likedPostIds = new Set(userLikes.map((l) => l.postId));
+
+    const userBookmark = await prisma.bookmark.findMany({
+      where: {
+        userId,
+        postId: { in: postIds },
+      },
+      select: {
+        postId: true,
+      },
+    });
+
+    const bookMarkedPostIds = new Set(userBookmark.map((b) => b.postId));
+    const finalPosts = posts.map((post) => ({
+      ...post,
+      isLiked: likedPostIds.has(post.id),
+      isBookmarked: bookMarkedPostIds.has(post.id),
+    }));
 
     const total = await prisma.post.count({
       where: {
@@ -271,7 +299,7 @@ const getFeed = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Feed fetched successfully.",
-      data: posts,
+      data: finalPosts,
       pagination: {
         total,
         page,
@@ -326,6 +354,34 @@ const getExplore = async (req, res) => {
         },
       },
     });
+    const postIds = posts.map((p) => p.id);
+
+    const userLikes = await prisma.like.findMany({
+      where: {
+        userId,
+        postId: { in: postIds },
+      },
+      select: { postId: true },
+    });
+
+    const likedPostIds = new Set(userLikes.map((l) => l.postId));
+
+    const userBookmark = await prisma.bookmark.findMany({
+      where: {
+        userId,
+        postId: { in: postIds },
+      },
+      select: {
+        postId: true,
+      },
+    });
+
+    const bookMarkedPostIds = new Set(userBookmark.map((b) => b.postId));
+    const finalPosts = posts.map((post) => ({
+      ...post,
+      isLiked: likedPostIds.has(post.id),
+      isBookmarked: bookMarkedPostIds.has(post.id),
+    }));
 
     const total = await prisma.post.count({
       where: {
@@ -336,7 +392,7 @@ const getExplore = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Explore feed fetched successfully.",
-      data: posts,
+      data: finalPosts,
       pagination: {
         total,
         page,
@@ -593,7 +649,6 @@ const likePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.userId;
-
     // Check if post exists
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -981,12 +1036,10 @@ const deleteComment = async (req, res) => {
 
     // Check ownership
     if (comment.userId !== userId) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "You can only delete your own comments",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own comments",
+      });
     }
 
     // Soft delete comment + decrement commentsCount atomically

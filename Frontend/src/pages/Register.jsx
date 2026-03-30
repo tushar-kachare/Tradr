@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authApi";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -21,21 +22,23 @@ const Register = () => {
     console.log("Register Data:", formData);
 
     try {
-        const res = await registerUser(formData);
-        console.log(res.data);
-        
-    } catch(err) {
-        console.log(err.message);
+      const res = await registerUser(formData);
+      console.log(res.data);
+      if (res.ok) {
+        navigate("/");
+      }
+    } catch (err) {
+      if (err.response) {
+        console.log(err.response.data.message);
+      } else {
+        console.log("Something went wrong");
+      }
     }
-    // TODO: API call
   };
-
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
-
       {/* Card */}
       <div className="w-full max-w-md bg-[#0f0f0f] border border-gray-800 rounded-2xl p-8 shadow-lg">
-        
         {/* Heading */}
         <h2 className="text-2xl font-semibold text-white mb-2">
           Create your Account
@@ -46,7 +49,6 @@ const Register = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-
           {/* Username */}
           <div>
             <label className="text-gray-400 text-sm block mb-2">
@@ -79,9 +81,7 @@ const Register = () => {
 
           {/* Password */}
           <div>
-            <label className="text-gray-400 text-sm block mb-2">
-              Password
-            </label>
+            <label className="text-gray-400 text-sm block mb-2">Password</label>
             <input
               type="password"
               name="password"
@@ -108,7 +108,6 @@ const Register = () => {
             Sign In
           </Link>
         </p>
-
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../api/authApi";
 
 
 const Login = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,6 +23,9 @@ const Login = () => {
 
     try {
         const res = await loginUser(formData);
+        if(res.ok) {
+          navigate('/');
+        }
         console.log(res.data);
     } catch(err) {
         console.log(err.response?.data || err.message);
