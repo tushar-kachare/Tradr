@@ -1,25 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import FrontPage from "./pages/FrontPage";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "./AppRoutes";
 
-function app() {
+function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <FrontPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   );
 }
-export default app;
+
+export default App;

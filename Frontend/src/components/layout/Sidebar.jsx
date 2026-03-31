@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 const Sidebar = () => {
+  const location = useLocation();
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
   return (
@@ -67,6 +68,7 @@ const Sidebar = () => {
           <div className="mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-md overflow-hidden">
             <Link
               to="/create-post"
+              state={{ backgroundLocation: location }}
               className="block px-4 py-3 hover:bg-gray-800 transition"
             >
               📝 Post

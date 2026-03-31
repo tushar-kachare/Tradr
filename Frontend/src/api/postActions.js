@@ -13,3 +13,7 @@ export const bookmarkPost = async (postId) => {
 export const unbookmarkPost = async (postId) => {
   return API.delete(`/posts/${postId}/bookmark`);
 };
+
+export const createPost = async (formData) => {
+  return API.post('/posts' , formData)
+}

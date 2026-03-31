@@ -23,10 +23,8 @@ const Login = () => {
 
     try {
         const res = await loginUser(formData);
-        if(res.ok) {
-          navigate('/');
-        }
         console.log(res.data);
+        navigate('/')
     } catch(err) {
         console.log(err.response?.data || err.message);
     }

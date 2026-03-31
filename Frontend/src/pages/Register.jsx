@@ -24,9 +24,7 @@ const Register = () => {
     try {
       const res = await registerUser(formData);
       console.log(res.data);
-      if (res.ok) {
-        navigate("/");
-      }
+      navigate("/");
     } catch (err) {
       if (err.response) {
         console.log(err.response.data.message);
