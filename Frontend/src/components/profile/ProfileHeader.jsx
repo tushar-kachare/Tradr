@@ -1,14 +1,46 @@
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { followUser , unFollowUser } from "../../api/profileApi";
 
 const ProfileHeader = ({ profile }) => {
   const navigate = useNavigate();
 
-  const { user, isOwnProfile, isFollowing } = profile;
+  const { user, isOwnProfile } = profile;
 
+  const [isFollowing, setIsFollowing] = useState(profile.isFollowing);
+  const [followersCount, setFollowersCount] = useState(user.followersCount);
+
+  const handleFollow = async () => {
+    try {
+      if (isFollowing) {
+        // 🔴 UNFOLLOW
+        setIsFollowing(false);
+        setFollowersCount((prev) => prev - 1);
+
+        await unFollowUser(user.username);
+      } else {
+        // 🟢 FOLLOW
+        setIsFollowing(true);
+        setFollowersCount((prev) => prev + 1);
+
+        await followUser(user.username);
+      }
+    } catch (err) {
+      console.log("Follow action failed");
+
+      // ❌ rollback
+      if (isFollowing) {
+        setIsFollowing(true);
+        setFollowersCount((prev) => prev + 1);
+      } else {
+        setIsFollowing(false);
+        setFollowersCount((prev) => prev - 1);
+      }
+    }
+  };
   return (
     <div className="border-b border-gray-800 pb-5 mb-4">
-      
       {/* 🔝 Top Bar */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -17,14 +49,11 @@ const ProfileHeader = ({ profile }) => {
         >
           <ArrowLeft size={20} />
         </button>
-
-
         <div /> {/* spacer */}
       </div>
 
       {/* 👤 User Info */}
       <div className="flex justify-between items-start">
-        
         {/* Left */}
         <div className="flex gap-4">
           {/* Avatar */}
@@ -43,18 +72,14 @@ const ProfileHeader = ({ profile }) => {
           {/* Name + username */}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">
-                {user.username}
-              </h2>
+              <h2 className="text-lg font-semibold">{user.username}</h2>
 
               {user.isVerified && (
                 <span className="text-blue-400 text-sm">✔</span>
               )}
             </div>
 
-            <p className="text-sm text-gray-400">
-              @{user.username}
-            </p>
+            <p className="text-sm text-gray-400">@{user.username}</p>
           </div>
         </div>
 
@@ -70,6 +95,7 @@ const ProfileHeader = ({ profile }) => {
             </button>
           ) : (
             <button
+              onClick={handleFollow}
               className={`px-4 py-1.5 rounded-full text-sm font-medium ${
                 isFollowing
                   ? "bg-white/10 hover:bg-white/20"
@@ -83,17 +109,13 @@ const ProfileHeader = ({ profile }) => {
       </div>
 
       {/* 📝 Bio */}
-      {user.bio && (
-        <p className="mt-3 text-sm text-gray-300">
-          {user.bio}
-        </p>
-      )}
+      {user.bio && <p className="mt-3 text-sm text-gray-300">{user.bio}</p>}
 
       {/* 📊 Followers */}
       <div className="mt-3 flex items-center gap-4 text-sm">
         <span>
           <span className="font-semibold text-white">
-            {user.followersCount}
+            {followersCount}
           </span>{" "}
           <span className="text-gray-400">Followers</span>
         </span>

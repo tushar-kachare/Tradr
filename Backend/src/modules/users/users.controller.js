@@ -90,6 +90,7 @@ const getUserByUsername = async function (req, res) {
     const portfolio = await prisma.portfolio.findUnique({
       where: { userId: user.id },
       select: {
+        id:true,
         name: true,
         balance: true,
         initialValue: true,
