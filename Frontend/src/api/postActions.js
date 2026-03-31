@@ -17,3 +17,10 @@ export const unbookmarkPost = async (postId) => {
 export const createPost = async (formData) => {
   return API.post('/posts' , formData)
 }
+
+export const shareTradePost = async ({ content, tradeId }) => {
+  return API.post("/posts", {
+    content,
+    tradeId,
+  });
+};

@@ -24,5 +24,5 @@ router.get(
   usersController.getUserPortfolio,
 );
 router.get("/:username/trades", authenticate, usersController.getUserTrades);
-router.get("/:username", usersController.getUserByUsername);
+router.get("/:username",authenticate, usersController.getUserByUsername);
 module.exports = router;

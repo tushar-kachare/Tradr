@@ -24,7 +24,7 @@ const me = async (req, res) => {
         updatedAt: true,
       },
     });
-    
+
     return res.status(200).json({
       success: true,
       user,
@@ -40,10 +40,12 @@ const me = async (req, res) => {
 const getUserByUsername = async function (req, res) {
   try {
     const { username } = req.params;
-
+    const loggedInUser = req.user?.userId;
+    // 1. Get user
     const user = await prisma.user.findUnique({
       where: { username },
       select: {
+        id: true,
         username: true,
         avatarUrl: true,
         website: true,
@@ -64,9 +66,42 @@ const getUserByUsername = async function (req, res) {
       });
     }
 
+    console.log(user);
+
+    const isOwnProfile = loggedInUser === user.id;
+    console.log(loggedInUser, user.id);
+
+    let isFollowing = false;
+
+    if (!isOwnProfile && loggedInUser) {
+      const follow = await prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: loggedInUser,
+            followingId: user.id,
+          },
+        },
+      });
+
+      isFollowing = !!follow;
+    }
+
+    // Get Portfolio
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { userId: user.id },
+      select: {
+        name: true,
+        balance: true,
+        initialValue: true,
+        currency: true,
+      },
+    });
     return res.json({
       success: true,
       user,
+      isOwnProfile,
+      isFollowing,
+      portfolio,
     });
   } catch (err) {
     return res.status(500).json({
@@ -413,6 +448,7 @@ const getFollowing = async (req, res) => {
 
 const getUserPosts = async (req, res) => {
   const { userId } = req.params;
+  const loggedInUserId = req.user.userId;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -455,7 +491,7 @@ const getUserPosts = async (req, res) => {
       },
     });
 
-    const [posts, total] = await Promise.all([
+    const [posts, total, likes, bookmarks] = await Promise.all([
       prisma.post.findMany({
         where: { userId, isDeleted: false },
         orderBy: { createdAt: "desc" },
@@ -471,9 +507,10 @@ const getUserPosts = async (req, res) => {
               tradeType: true,
               status: true,
               entryPrice: true,
+              leverage: true,
               targetPrice: true,
+              exitPrice: true,
               stopLoss: true,
-              currentPrice: true,
               profitLoss: true,
               strategy: true,
               holdTime: true,
@@ -502,9 +539,10 @@ const getUserPosts = async (req, res) => {
                   tradeType: true,
                   status: true,
                   entryPrice: true,
+                  exitPrice: true,
+                  leverage: true,
                   targetPrice: true,
                   stopLoss: true,
-                  currentPrice: true,
                   profitLoss: true,
                   strategy: true,
                   holdTime: true,
@@ -520,7 +558,28 @@ const getUserPosts = async (req, res) => {
       prisma.post.count({
         where: { userId, isDeleted: false },
       }),
+
+      // 🔥 Likes by logged-in user
+      prisma.like.findMany({
+        where: {
+          userId: loggedInUserId,
+          post: { userId },
+        },
+        select: { postId: true },
+      }),
+
+      // 🔥 Bookmarks by logged-in user
+      prisma.bookmark.findMany({
+        where: {
+          userId: loggedInUserId,
+          post: { userId },
+        },
+        select: { postId: true },
+      }),
     ]);
+
+    const likedPostIds = new Set(likes.map((l) => l.postId));
+    const bookmarkedPostIds = new Set(bookmarks.map((b) => b.postId));
 
     const shapedPosts = posts.map((post) => ({
       id: post.id,
@@ -534,6 +593,8 @@ const getUserPosts = async (req, res) => {
       createdAt: post.createdAt,
       trade: post.trade ?? null,
       originalPost: post.originalPost ?? null,
+      isLiked: likedPostIds.has(post.id),
+      isBookmarked: bookmarkedPostIds.has(post.id),
     }));
 
     return res.status(200).json({
@@ -1091,7 +1152,9 @@ const updateAvatar = async (req, res) => {
     const avatarUrl = req.file.path; // Cloudinary URL from multer-storage-cloudinary
 
     // If user already has an avatar, delete the old one from Cloudinary
-    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+    });
     if (user.avatarUrl) {
       const publicId = user.avatarUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(`tradr/avatars/${publicId}`);

@@ -1,6 +1,5 @@
 const prisma = require("../config/db");
 const { getPrice } = require("./price.service");
-const { closeTrade } = require("../modules/trades/trades.controller");
 const { closeTradeService } = require("./trade.service");
 
 const startTradeEngine = () => {

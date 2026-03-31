@@ -1,85 +1,106 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import {
+  Home,
+  User,
+  Bell,
+  BookOpen,
+  Settings,
+  Plus,
+  FileText,
+  TrendingUp
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Sidebar = () => {
+  const {user} = useAuth();
   const location = useLocation();
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
   return (
     <div className="h-full flex flex-col p-4">
+      
       {/* Top Section */}
       <div>
         <h1 className="text-3xl font-bold mb-6">Logo</h1>
 
-        <nav className="flex flex-col gap-2 text-gray-500">
+        <nav className="flex flex-col gap-2 text-gray-400">
+
           <Link
-            to={"/"}
+            to="/"
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
           >
-            <span>🏠</span>
+            <Home size={20} />
             <p>Home</p>
           </Link>
 
           <Link
-            to={"/profile"}
+            to={`/profile/${user.username}`}
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
           >
-            <span>👤</span>
+            <User size={20} />
             <p>Profile</p>
           </Link>
 
           <Link
-            to={"/notifications"}
+            to="/notifications"
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
           >
-            <span>🔔</span>
+            <Bell size={20} />
             <p>Notifications</p>
           </Link>
 
           <Link
-            to={"/education"}
+            to="/education"
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
           >
-            <span>📚</span>
+            <BookOpen size={20} />
             <p>Education</p>
           </Link>
 
           <Link
-            to={"/setting"}
+            to="/setting"
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 transition"
           >
-            <span>⚙️</span>
+            <Settings size={20} />
             <p>Settings</p>
           </Link>
+
         </nav>
       </div>
 
       {/* Bottom Section */}
       <div className="mt-3 relative">
+
         <button
           onClick={() => setShowCreateMenu((prev) => !prev)}
-          className="w-full bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-3 rounded-lg font-semibold cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-3 rounded-lg font-semibold"
         >
+          <Plus size={18} />
           Create
         </button>
 
-        {/* 🔽 Dropdown */}
+        {/* Dropdown */}
         {showCreateMenu && (
           <div className="mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-md overflow-hidden">
+
             <Link
               to="/create-post"
               state={{ backgroundLocation: location }}
-              className="block px-4 py-3 hover:bg-gray-800 transition"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"
             >
-              📝 Post
+              <FileText size={18} />
+              Post
             </Link>
 
             <Link
               to="/create-trade"
-              className="block px-4 py-3 hover:bg-gray-800 transition"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition"
             >
-              💰 Trade
+              <TrendingUp size={18} />
+              Share Trade
             </Link>
+
           </div>
         )}
       </div>

@@ -116,37 +116,51 @@ const createTrade = async (req, res) => {
       riskReward = (reward / risk).toFixed(2);
     }
 
-    const trade = await prisma.trade.create({
-      data: {
-        userId,
-        portfolioId: portfolio.id,
-        coinId: coinRecord.id,
-        coinSymbol: coinRecord.symbol,
-        coinName: coinRecord.name,
-        tradingPair: tradingPair || `${coinRecord.symbol}/USDT`,
-        tradeType,
-        entryPrice,
-        targetPrice,
-        stopLoss: stopLoss || null,
-        positionSize: positionSize || null,
-        actualAmount,
-        leverage,
-        riskReward,
-        holdTime: holdTime || null,
-        strategy: strategy || null,
-      },
-      include: {
-        coin: { select: { symbol: true, name: true, logoUrl: true } },
-        user: {
-          select: { username: true, avatarUrl: true },
+    const result = await prisma.$transaction(async (tx) => {
+      const trade = await tx.trade.create({
+        data: {
+          userId,
+          portfolioId: portfolio.id,
+          coinId: coinRecord.id,
+          coinSymbol: coinRecord.symbol,
+          coinName: coinRecord.name,
+          tradingPair: tradingPair || `${coinRecord.symbol}/USDT`,
+          tradeType,
+          entryPrice,
+          targetPrice,
+          stopLoss: stopLoss || null,
+          positionSize: positionSize || null,
+          actualAmount,
+          leverage,
+          riskReward,
+          holdTime: holdTime || null,
+          strategy: strategy || null,
         },
-      },
+        include: {
+          coin: { select: { symbol: true, name: true, logoUrl: true } },
+          user: {
+            select: { username: true, avatarUrl: true },
+          },
+        },
+      });
+
+      // 🔥 increment tradesCount
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          tradesCount: {
+            increment: 1,
+          },
+        },
+      });
+
+      return trade;
     });
 
     return res.status(201).json({
       success: true,
       message: "Trade created successfully",
-      trade,
+      trade: result,
     });
   } catch (err) {
     console.error("createTrade error:", err);

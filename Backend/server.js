@@ -1,9 +1,15 @@
 require("dotenv").config();
+const http = require("http");
 const app = require("./src/app");
 const prisma = require("./src/config/db");
 
-const { startPriceStream } = require("./src/services/price.service");
+const {
+  setupPriceBroadcastServer,
+  startPriceStream,
+} = require("./src/services/price.service");
 const { startTradeEngine } = require("./src/services/tradeEngine.service");
+
+const server = http.createServer(app);
 
 async function init() {
   const coins = await prisma.coin.findMany({
@@ -18,6 +24,8 @@ async function init() {
 init();
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+setupPriceBroadcastServer(server);
+
+server.listen(PORT, () => {
   console.log(`Tradr server running on port ${PORT}`);
 });

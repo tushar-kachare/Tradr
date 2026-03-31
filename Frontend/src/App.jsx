@@ -1,10 +1,13 @@
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./AppRoutes";
+import LivePriceProvider from "./components/providers/LivePriceProvider";
 
 function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <LivePriceProvider>
+        <AppRoutes />
+      </LivePriceProvider>
     </BrowserRouter>
   );
 }

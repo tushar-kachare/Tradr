@@ -4,7 +4,9 @@ import Register from "./pages/Register";
 import FrontPage from "./pages/FrontPage";
 import FeedSection from "./components/layout/FeedSection";
 import CreatePost from "./pages/CreatePost";
+import CreateTrade from "./pages/CreateTrade";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProfilePage from "./pages/ProfilePage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -24,6 +26,8 @@ const AppRoutes = () => {
           }
         >
           <Route index element={<FeedSection />} />
+          <Route path="create-trade" element={<CreateTrade />} />
+          <Route path="profile/:username" element={<ProfilePage />} />
         </Route>
 
         <Route path="/login" element={<Login />} />

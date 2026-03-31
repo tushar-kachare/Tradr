@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 const formatPostDate = (dateValue) => {
   if (!dateValue) return "";
 
@@ -17,7 +18,8 @@ const formatPostDate = (dateValue) => {
   return date.toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
-    year: date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+    year:
+      date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
   });
 };
 
@@ -28,19 +30,21 @@ const PostHeader = ({ user, createdAt }) => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="shrink-0">
-          {user?.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt={`${user?.username || "User"} avatar`}
-              className="h-10 w-10 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white">
-              {initials}
-            </div>
-          )}
-        </div>
+        <Link to={`/profile/${user.username}`}>
+          <div className="shrink-0">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={`${user?.username || "User"} avatar`}
+                className="h-10 w-10 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white">
+                {initials}
+              </div>
+            )}
+          </div>
+        </Link>
 
         <div className="flex flex-col leading-tight">
           <div className="flex items-center gap-2">
