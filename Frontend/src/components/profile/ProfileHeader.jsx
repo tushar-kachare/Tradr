@@ -1,7 +1,7 @@
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { followUser , unFollowUser } from "../../api/profileApi";
+import { useEffect, useState } from "react";
+import { followUser, unFollowUser } from "../../api/profileApi";
 
 const ProfileHeader = ({ profile }) => {
   const navigate = useNavigate();
@@ -10,6 +10,11 @@ const ProfileHeader = ({ profile }) => {
 
   const [isFollowing, setIsFollowing] = useState(profile.isFollowing);
   const [followersCount, setFollowersCount] = useState(user.followersCount);
+
+  useEffect(() => {
+    setIsFollowing(profile.isFollowing);
+    setFollowersCount(user.followersCount);
+  }, [profile.isFollowing, user.followersCount]);
 
   const handleFollow = async () => {
     try {
@@ -113,19 +118,33 @@ const ProfileHeader = ({ profile }) => {
 
       {/* 📊 Followers */}
       <div className="mt-3 flex items-center gap-4 text-sm">
-        <span>
-          <span className="font-semibold text-white">
-            {followersCount}
-          </span>{" "}
+        <button
+          type="button"
+          onClick={() =>
+            navigate(`/profile/${user.username}/connections`, {
+              state: { activeTab: "followers" },
+            })
+          }
+          className="transition hover:text-white"
+        >
+          <span className="font-semibold text-white">{followersCount}</span>{" "}
           <span className="text-gray-400">Followers</span>
-        </span>
+        </button>
 
-        <span>
+        <button
+          type="button"
+          onClick={() =>
+            navigate(`/profile/${user.username}/connections`, {
+              state: { activeTab: "following" },
+            })
+          }
+          className="transition hover:text-white"
+        >
           <span className="font-semibold text-white">
             {user.followingCount}
           </span>{" "}
           <span className="text-gray-400">Following</span>
-        </span>
+        </button>
       </div>
     </div>
   );

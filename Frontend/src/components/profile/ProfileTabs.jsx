@@ -1,9 +1,8 @@
-const tabs = ["portfolios", "posts", "likes"];
+const tabs = ["portfolios", "posts", "likes", "bookmarks"];
 
 const ProfileTabs = ({ activeTab, setActiveTab }) => {
   return (
     <div className="relative border-b border-gray-800">
-      
       <div className="flex">
         {tabs.map((tab) => (
           <button
@@ -32,5 +31,4 @@ const ProfileTabs = ({ activeTab, setActiveTab }) => {
     </div>
   );
 };
-
 export default ProfileTabs;

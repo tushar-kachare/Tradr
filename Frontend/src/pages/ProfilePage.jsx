@@ -1,13 +1,11 @@
 import { useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { fetchProfile } from "../api/profileApi";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfileContent from "../components/profile/ProfileContent";
-import { act } from "react";
+
 const ProfilePage = () => {
-  const { user } = useAuth();
   const { username } = useParams();
 
   const [profile, setProfile] = useState(null);
@@ -21,7 +19,6 @@ const ProfilePage = () => {
         setLoading(true);
         setError(null);
         const res = await fetchProfile(username);
-        console.log(res.user);
         setProfile(res);
       } catch (err) {
         setError("Failed to load Profile");
@@ -31,7 +28,7 @@ const ProfilePage = () => {
     };
 
     getProfile();
-  }, []);
+  }, [username]);
 
   if (loading) {
     return (

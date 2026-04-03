@@ -90,7 +90,7 @@ const getUserByUsername = async function (req, res) {
     const portfolio = await prisma.portfolio.findUnique({
       where: { userId: user.id },
       select: {
-        id:true,
+        id: true,
         name: true,
         balance: true,
         initialValue: true,
@@ -359,6 +359,7 @@ const unFollowUser = async (req, res) => {
 
 const getFollowers = async (req, res) => {
   try {
+    const loggedInUserId = req.user.userId;
     const { username } = req.params;
 
     const targetUser = await prisma.user.findUnique({
@@ -378,23 +379,45 @@ const getFollowers = async (req, res) => {
       select: {
         follower: {
           select: {
+            id: true, // 🔥 needed
             username: true,
             avatarUrl: true,
             isVerified: true,
           },
         },
       },
-    }); // this is list of map (follower)
+    });
 
-    const follwersList = followers.map((f) => f.follower);
+    const followersList = followers.map((f) => f.follower);
+
+    const followerIds = followersList.map((f) => f.id);
+
+    // 🔥 check which of these are followed by logged-in user
+    const following = await prisma.follow.findMany({
+      where: {
+        followerId: loggedInUserId,
+        followingId: { in: followerIds },
+      },
+      select: {
+        followingId: true,
+      },
+    });
+
+    const followingSet = new Set(following.map((f) => f.followingId));
+
+    // 🔥 final shaped response
+    const finalFollowers = followersList.map((user) => ({
+      ...user,
+      isFollowing: followingSet.has(user.id),
+    }));
 
     return res.status(200).json({
       success: true,
-      count: follwersList.length,
-      followers: follwersList,
+      count: finalFollowers.length,
+      followers: finalFollowers,
     });
   } catch (err) {
-    console.error(error);
+    console.error("getFollowers error:", err);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch followers",
@@ -404,6 +427,7 @@ const getFollowers = async (req, res) => {
 
 const getFollowing = async (req, res) => {
   try {
+    const loggedInUserId = req.user.userId;
     const { username } = req.params;
 
     const targetUser = await prisma.user.findUnique({
@@ -423,23 +447,44 @@ const getFollowing = async (req, res) => {
       select: {
         following: {
           select: {
+            id: true, // 🔥 needed
             username: true,
             avatarUrl: true,
             isVerified: true,
           },
         },
       },
-    }); // this is list of map (following)
+    });
 
     const followingList = following.map((f) => f.following);
 
+    const followingIds = followingList.map((f) => f.id);
+
+    // 🔥 check which of these are followed by logged-in user
+    const myFollowing = await prisma.follow.findMany({
+      where: {
+        followerId: loggedInUserId,
+        followingId: { in: followingIds },
+      },
+      select: {
+        followingId: true,
+      },
+    });
+
+    const followingSet = new Set(myFollowing.map((f) => f.followingId));
+
+    const finalFollowing = followingList.map((user) => ({
+      ...user,
+      isFollowing: followingSet.has(user.id),
+    }));
+
     return res.status(200).json({
       success: true,
-      count: followingList.length,
-      followers: followingList,
+      count: finalFollowing.length,
+      following: finalFollowing, // 🔥 fixed key name
     });
   } catch (err) {
-    console.error(err);
+    console.error("getFollowing error:", err);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch following",
@@ -811,37 +856,35 @@ const getUserTrades = async (req, res) => {
   }
 };
 
-const getMyLikes = async (req, res) => {
+const getUserLikes = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { page = 1, limit = 10 } = req.query;
+    const { userId } = req.params;
+    const loggedInUserId = req.user.userId;
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    if (isNaN(pageNum) || pageNum < 1) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid page number" });
+    if (page < 1 || limit < 1 || limit > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination params",
+      });
     }
 
-    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Limit must be between 1 and 50" });
-    }
+    const skip = (page - 1) * limit;
 
-    const skip = (pageNum - 1) * limitNum;
-
-    const [likes, total] = await Promise.all([
+    const [likes, total, bookmarks] = await Promise.all([
       prisma.like.findMany({
-        where: { userId },
+        where: {
+          userId,
+          post: {
+            isDeleted: false, // ✅ filter here
+          },
+        },
         skip,
-        take: limitNum,
+        take: limit,
         orderBy: { createdAt: "desc" },
         select: {
-          id: true,
-          createdAt: true,
           post: {
             select: {
               id: true,
@@ -853,35 +896,6 @@ const getMyLikes = async (req, res) => {
               repostsCount: true,
               bookmarksCount: true,
               createdAt: true,
-              isDeleted: true,
-              originalPostId: true, // ← add this
-              originalPost: {
-                // ← add this
-                select: {
-                  id: true,
-                  content: true,
-                  mediaUrls: true,
-                  createdAt: true,
-                  user: {
-                    select: {
-                      id: true,
-                      username: true,
-                      avatarUrl: true,
-                      isVerified: true,
-                    },
-                  },
-                },
-              },
-              trade: {
-                select: {
-                  id: true,
-                  tradingPair: true,
-                  tradeType: true,
-                  status: true,
-                  entryPrice: true,
-                  exitPrice: true,
-                },
-              },
               user: {
                 select: {
                   id: true,
@@ -891,69 +905,151 @@ const getMyLikes = async (req, res) => {
                   isVerified: true,
                 },
               },
+              trade: {
+                where: { isDeleted: false }, // ✅ allowed (list relation)
+                select: {
+                  id: true,
+                  coinSymbol: true,
+                  coinName: true,
+                  tradeType: true,
+                  status: true,
+                  entryPrice: true,
+                  leverage: true,
+                  targetPrice: true,
+                  exitPrice: true,
+                  stopLoss: true,
+                  profitLoss: true,
+                  strategy: true,
+                  holdTime: true,
+                  closedAt: true,
+                  createdAt: true,
+                },
+              },
+
+              originalPost: {
+                // ❌ NO where here
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      username: true,
+                      avatarUrl: true,
+                      role: true,
+                      isVerified: true,
+                    },
+                  },
+                  trade: {
+                    where: { isDeleted: false }, // ✅ allowed
+                    select: {
+                      id: true,
+                      coinSymbol: true,
+                      coinName: true,
+                      tradeType: true,
+                      status: true,
+                      entryPrice: true,
+                      exitPrice: true,
+                      leverage: true,
+                      targetPrice: true,
+                      stopLoss: true,
+                      profitLoss: true,
+                      strategy: true,
+                      holdTime: true,
+                      closedAt: true,
+                      createdAt: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
       }),
-      prisma.like.count({ where: { userId } }),
+
+      prisma.like.count({
+        where: {
+          userId,
+          post: { isDeleted: false }, // ✅ keep consistent
+        },
+      }),
+
+      prisma.bookmark.findMany({
+        where: { userId: loggedInUserId },
+        select: { postId: true },
+      }),
     ]);
 
-    // Filter out soft deleted posts
-    const filteredLikes = likes.filter((like) => !like.post.isDeleted);
+    // remove null posts (deleted ones filtered by prisma)
+    const validPosts = likes.map((l) => l.post).filter((p) => p !== null);
+
+    const bookmarkedPostIds = new Set(bookmarks.map((b) => b.postId));
+
+    const shapedPosts = validPosts.map((post) => ({
+      id: post.id,
+      content: post.content,
+      mediaUrls: post.mediaUrls,
+      user: post.user,
+      postType: post.postType,
+      likesCount: post.likesCount,
+      commentsCount: post.commentsCount,
+      repostsCount: post.repostsCount,
+      bookmarksCount: post.bookmarksCount,
+      createdAt: post.createdAt,
+      trade: post.trade ?? null,
+      originalPost: post.originalPost ?? null,
+
+      // since it's liked tab → always true
+      isLiked: true,
+      isBookmarked: bookmarkedPostIds.has(post.id),
+    }));
 
     return res.status(200).json({
       success: true,
-      data: {
-        likes: filteredLikes,
-        pagination: {
-          total,
-          page: pageNum,
-          limit: limitNum,
-          totalPages: Math.ceil(total / limitNum),
-          hasNextPage: pageNum < Math.ceil(total / limitNum),
-          hasPrevPage: pageNum > 1,
-        },
+      posts: shapedPosts, // 🔥 SAME as getUserPosts
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
       },
     });
   } catch (error) {
-    console.error("getMyLikes error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    console.error("getUserLikes error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
-const getMyBookmarks = async (req, res) => {
+const getUserBookmarks = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { page = 1, limit = 10 } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-
-    if (isNaN(pageNum) || pageNum < 1) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid page number" });
+    if (page < 1 || limit < 1 || limit > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination params",
+      });
     }
 
-    if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Limit must be between 1 and 50" });
-    }
+    const skip = (page - 1) * limit;
 
-    const skip = (pageNum - 1) * limitNum;
-
-    const [bookmarks, total] = await Promise.all([
+    const [bookmarks, total, likes] = await Promise.all([
       prisma.bookmark.findMany({
-        where: { userId },
+        where: {
+          userId,
+          post: {
+            isDeleted: false, // ✅ filter here (correct way)
+          },
+        },
         skip,
-        take: limitNum,
+        take: limit,
         orderBy: { createdAt: "desc" },
         select: {
-          id: true,
-          createdAt: true,
           post: {
             select: {
               id: true,
@@ -965,33 +1061,24 @@ const getMyBookmarks = async (req, res) => {
               repostsCount: true,
               bookmarksCount: true,
               createdAt: true,
-              isDeleted: true,
-              originalPostId: true, // ← add this
-              originalPost: {
-                // ← add this
-                select: {
-                  id: true,
-                  content: true,
-                  mediaUrls: true,
-                  createdAt: true,
-                  user: {
-                    select: {
-                      id: true,
-                      username: true,
-                      avatarUrl: true,
-                      isVerified: true,
-                    },
-                  },
-                },
-              },
               trade: {
+                where: { isDeleted: false },
                 select: {
                   id: true,
-                  tradingPair: true,
+                  coinSymbol: true,
+                  coinName: true,
                   tradeType: true,
                   status: true,
                   entryPrice: true,
+                  leverage: true,
+                  targetPrice: true,
                   exitPrice: true,
+                  stopLoss: true,
+                  profitLoss: true,
+                  strategy: true,
+                  holdTime: true,
+                  closedAt: true,
+                  createdAt: true,
                 },
               },
               user: {
@@ -1003,37 +1090,103 @@ const getMyBookmarks = async (req, res) => {
                   isVerified: true,
                 },
               },
+              originalPost: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      username: true,
+                      avatarUrl: true,
+                      role: true,
+                      isVerified: true,
+                    },
+                  },
+                  trade: {
+                    where: { isDeleted: false },
+                    select: {
+                      id: true,
+                      coinSymbol: true,
+                      coinName: true,
+                      tradeType: true,
+                      status: true,
+                      entryPrice: true,
+                      exitPrice: true,
+                      leverage: true,
+                      targetPrice: true,
+                      stopLoss: true,
+                      profitLoss: true,
+                      strategy: true,
+                      holdTime: true,
+                      closedAt: true,
+                      createdAt: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
       }),
-      prisma.bookmark.count({ where: { userId } }),
+
+      prisma.bookmark.count({
+        where: {
+          userId,
+          post: { isDeleted: false },
+        },
+      }),
+
+      // 🔥 get liked posts for current user
+      prisma.like.findMany({
+        where: {
+          userId,
+        },
+        select: { postId: true },
+      }),
     ]);
 
-    // Filter out soft deleted posts
-    const filteredBookmarks = bookmarks.filter(
-      (bookmark) => !bookmark.post.isDeleted,
-    );
+    const validPosts = bookmarks.map((b) => b.post).filter((p) => p !== null);
+
+    const postIds = validPosts.map((p) => p.id);
+
+    const likedPostIds = new Set(likes.map((l) => l.postId));
+
+    const shapedPosts = validPosts.map((post) => ({
+      id: post.id,
+      content: post.content,
+      mediaUrls: post.mediaUrls,
+      postType: post.postType,
+      likesCount: post.likesCount,
+      user: post.user,
+      commentsCount: post.commentsCount,
+      repostsCount: post.repostsCount,
+      bookmarksCount: post.bookmarksCount,
+      createdAt: post.createdAt,
+
+      trade: post.trade ?? null,
+      originalPost: post.originalPost ?? null,
+
+      isLiked: likedPostIds.has(post.id),
+      isBookmarked: true, // 🔥 always true (this is bookmarks tab)
+    }));
 
     return res.status(200).json({
       success: true,
-      data: {
-        bookmarks: filteredBookmarks,
-        pagination: {
-          total,
-          page: pageNum,
-          limit: limitNum,
-          totalPages: Math.ceil(total / limitNum),
-          hasNextPage: pageNum < Math.ceil(total / limitNum),
-          hasPrevPage: pageNum > 1,
-        },
+      posts: shapedPosts, // 🔥 SAME SHAPE everywhere
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1,
       },
     });
   } catch (error) {
-    console.error("getMyBookmarks error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    console.error("getUserBookmarks error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -1185,8 +1338,8 @@ module.exports = {
   getUserPosts,
   getUserPortfolio,
   getUserTrades,
-  getMyLikes,
-  getMyBookmarks,
+  getUserLikes,
+  getUserBookmarks,
   searchUser,
   updateAvatar,
 };
