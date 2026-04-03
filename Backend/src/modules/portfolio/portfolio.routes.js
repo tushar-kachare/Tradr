@@ -7,5 +7,5 @@ const portfolioController = require("./portfolio.controller");
 router.get("/me", authenticate, portfolioController.getPortfolio);
 router.post("/", authenticate, portfolioController.createPortfolio);
 router.patch("/", authenticate, portfolioController.updatePortfolio);
-
+router.get('/:portfolioId/trades' , authenticate , portfolioController.getPortfolioTrades);
 module.exports = router;

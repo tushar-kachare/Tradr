@@ -1141,6 +1141,83 @@ Requires Authentication: `Yes`
 
 ---
 
+### Get Portfolio Trades
+
+**GET** `/portfolios/:portfolioId/trades?status=(open/closed)`
+
+Requires Authentication: `Yes`
+
+---
+
+### Path Parameters
+
+| Param | Type | Description |
+|---|---|---|
+| `portfolioId` | string (uuid) | ID of the portfolio |
+
+---
+
+### Query Parameters
+
+| Param | Type | Description |
+|---|---|---|
+| `status` | string | Filter trades by status (`OPEN` or `CLOSED`) |
+| `page` | number | Page number (default: `1`) |
+| `limit` | number | Number of trades per page (default: `10`, max: `50`) |
+
+---
+**Success Response `20`**
+
+```json
+  {
+  "success": true,
+  "data": {
+    "portfolio": {
+      "id": "abc123",
+      "name": "BTC Heavy",
+      "balance": 12000,
+      "initialValue": 10000
+    },
+    "trades": [
+      {
+        "id": "trade1",
+        "tradingPair": "BTC/USDT",
+        "tradeType": "LONG",
+        "status": "OPEN",
+        "entryPrice": 45000,
+        "exitPrice": null,
+        "positionSize": 0.5,
+        "leverage": 5,
+        "riskReward": 2,
+        "holdTime": null,
+        "createdAt": "2026-04-01T10:00:00.000Z",
+        "closedAt": null
+      }
+    ],
+    "pagination": {
+      "total": 25,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 3,
+      "hasNextPage": true,
+      "hasPrevPage": false
+    }
+  }
+}
+```
+**Error Responses**
+
+| Status | Message                           |
+| ------ | --------------------------------- |
+| `400`  | Portfolio ID is required          |
+| `400`  | Invalid page number               |
+| `400`  | Limit must be between 1 and 50    |
+| `400`  | Status must be `OPEN` or `CLOSED` |
+| `401`  | Unauthorized                      |
+| `404`  | Portfolio not found               |
+| `500`  | Internal server error             |
+
+---
 ### Trade
 
 ---
