@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import FollowListPage from "./pages/FollowListPage";
 import PortfolioPage from "./pages/PortfolioPage";
+import TradePage from "./pages/TradePage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -35,6 +36,7 @@ const AppRoutes = () => {
             element={<FollowListPage />}
           />
           <Route path="portfolio/:portfolioId" element={<PortfolioPage />} />
+          <Route path="trades/:tradeId" element={<TradePage />} />
         </Route>
 
         <Route path="/login" element={<Login />} />

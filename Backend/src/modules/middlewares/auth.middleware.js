@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const authenticate = (req, res, next) => {
+  if (req.method === "OPTIONS") return next()
   try {
     let token;
 

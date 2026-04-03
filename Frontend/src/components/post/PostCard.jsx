@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import PostActions from "./PostActions";
 import PostContent from "./PostContent";
 import PostHeader from "./PostHeader";
@@ -5,6 +6,7 @@ import RepostWrapper from "./RepostWrapper";
 import TradeCard from "./TradeCard";
 
 const PostCard = ({ post }) => {
+  const navigate = useNavigate();
   const isRepost = post.postType === "repost";
   const hasTrade = Boolean(post.trade);
   const originalPost = post.originalPost;
@@ -53,7 +55,7 @@ const PostCard = ({ post }) => {
 
             <PostContent content={post.content} media={post.mediaUrls} />
 
-            {hasTrade && <TradeCard trade={post.trade} />}
+            {hasTrade && <TradeCard trade={post.trade} onClick={() => navigate(`/portfolio/${post.trade.portfolioId}`)} />}
 
             <PostActions post={post} />
           </>

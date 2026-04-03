@@ -1,6 +1,8 @@
+import { Link, useNavigate } from "react-router-dom";
 import TradeCard from "../post/TradeCard";
 
 const PortfolioTradesSection = ({ trades, activeTab, loading, error }) => {
+  const navigate = useNavigate();
   if (loading) {
     return (
       <div className="px-4 py-6">
@@ -34,7 +36,7 @@ const PortfolioTradesSection = ({ trades, activeTab, loading, error }) => {
   return (
     <div className="space-y-4 px-4 py-6">
       {trades.map((trade) => (
-        <TradeCard key={trade.id} trade={trade} />
+          <TradeCard key={trade.id} trade={trade} onClick={() => navigate(`/trades/${trade.id}`)} />
       ))}
     </div>
   );
