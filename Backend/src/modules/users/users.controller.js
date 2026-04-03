@@ -714,6 +714,17 @@ const getUserPortfolio = async (req, res) => {
       },
     });
 
+    const winningClosedTradesCount = await prisma.trade.count({
+      where: {
+        portfolioId: portfolio.id,
+        status: "closed",
+        isDeleted: false,
+        profitLoss: {
+          gt: 0,
+        },
+      },
+    });
+
     // Compute values
     const initialValue = parseFloat(portfolio.initialValue);
     const balance = parseFloat(portfolio.balance);
@@ -741,6 +752,7 @@ const getUserPortfolio = async (req, res) => {
       tradesCount: portfolio._count.trades,
       openTradesCount: openTrades.length,
       closedTradesCount,
+      winningClosedTradesCount,
       createdAt: portfolio.createdAt,
       updatedAt: portfolio.updatedAt,
     });
@@ -809,15 +821,22 @@ const getUserTrades = async (req, res) => {
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
+          coinSymbol: true,
+          coinName: true,
           tradingPair: true,
           tradeType: true,
           status: true,
           entryPrice: true,
+          targetPrice: true,
           exitPrice: true,
+          stopLoss: true,
+          profitLoss: true,
           positionSize: true,
           leverage: true,
           riskReward: true,
           holdTime: true,
+          strategy: true,
+          currentPrice: true,
           createdAt: true,
           closedAt: true,
           portfolio: {

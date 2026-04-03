@@ -8,6 +8,7 @@ import CreateTrade from "./pages/CreateTrade";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
 import FollowListPage from "./pages/FollowListPage";
+import PortfolioPage from "./pages/PortfolioPage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -33,6 +34,7 @@ const AppRoutes = () => {
             path="profile/:username/connections"
             element={<FollowListPage />}
           />
+          <Route path="portfolio/:portfolioId" element={<PortfolioPage />} />
         </Route>
 
         <Route path="/login" element={<Login />} />

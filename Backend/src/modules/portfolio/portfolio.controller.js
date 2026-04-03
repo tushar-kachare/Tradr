@@ -254,25 +254,46 @@ const getPortfolioTrades = async (req, res) => {
 
     const skip = (pageNum - 1) * limitNum;
 
+    const orderBy =
+      status === "closed" ? { closedAt: "desc" } : { createdAt: "desc" };
     const [trades, total] = await Promise.all([
       prisma.trade.findMany({
         where,
         skip,
         take: limitNum,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         select: {
           id: true,
+          userId: true,
+          portfolioId: true,
+
+          coinSymbol: true,
+          coinName: true,
           tradingPair: true,
+          coinId: true,
+
           tradeType: true,
           status: true,
+
           entryPrice: true,
-          exitPrice: true,
-          positionSize: true,
-          leverage: true,
+          targetPrice: true,
+          stopLoss: true,
           riskReward: true,
+
+          positionSize: true,
+          actualAmount: true,
+          leverage: true,
+
+          currentPrice: true,
+          exitPrice: true,
+          profitLoss: true,
+
           holdTime: true,
+          strategy: true,
+
           createdAt: true,
           closedAt: true,
+          updatedAt: true,
         },
       }),
       prisma.trade.count({ where }),

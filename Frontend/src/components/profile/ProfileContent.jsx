@@ -4,10 +4,13 @@ import LikedPosts from "./LikedPosts";
 import BookmarkPosts from "./BookmarkPosts";
 
 const ProfileContent = ({ profile, activeTab }) => {
-  console.log(activeTab);
-
   if (activeTab === "portfolios") {
-    return <PortfolioList portfolio={profile.portfolio} />;
+    return (
+      <PortfolioList
+        portfolio={profile.portfolio}
+        username={profile.user.username}
+      />
+    );
   }
 
   if (activeTab === "posts") {

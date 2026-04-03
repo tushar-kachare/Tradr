@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-const PortfolioList = ({ portfolio }) => {
+const PortfolioList = ({ portfolio, username }) => {
   if (!portfolio) {
     return (
       <div className="text-gray-400 text-center mt-6">No portfolio found</div>
@@ -16,7 +16,13 @@ const PortfolioList = ({ portfolio }) => {
   const isProfit = pnl >= 0;
 
   return (
-    <Link to={`/portfolio/${portfolio.id}`}>
+    <Link
+      to={`/portfolio/${portfolio.id}`}
+      state={{
+        username,
+        portfolio,
+      }}
+    >
       <div className="mt-4 p-4 rounded-xl bg-[#161b22] border border-gray-800">
         {/* 🔝 Top Row */}
         <div className="flex justify-between items-center mb-3">

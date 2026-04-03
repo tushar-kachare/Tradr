@@ -62,7 +62,13 @@ const TradeCard = ({ trade }) => {
   const status = trade.status?.toLowerCase() || "open";
   const statusColor = status === "open" ? "bg-emerald-500" : "bg-red-400";
   const pnlColor =
-    Number(profitLoss) >= 0 ? "text-emerald-400" : "text-rose-400";
+    trade.status === "closed"
+      ? Number(trade.profitLoss) >= 0
+        ? "text-emerald-400"
+        : "text-rose-400"
+      : Number(profitLoss) >= 0
+        ? "text-emerald-400"
+        : "text-rose-400";
   const directionTone =
     direction === "long"
       ? "bg-emerald-500/15 text-emerald-300"
@@ -75,8 +81,8 @@ const TradeCard = ({ trade }) => {
   const statusDateValue =
     status === "open" ? trade.createdAt : trade.closedAt || trade.createdAt;
 
-    const priceColor =
-  trade.status === "closed" ? "text-gray-400" : "text-white";
+  const priceColor = trade.status === "closed" ? "text-gray-400" : "text-white";
+  
   return (
     <div className="mt-3 rounded-2xl border border-white/10 bg-[#1b1b1b] p-4 shadow-sm shadow-black/30">
       <div className="flex items-start justify-between gap-3">

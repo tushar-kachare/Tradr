@@ -35,3 +35,19 @@ export const fetchFollowing = async (username) => {
   const res = await API.get(`/users/${username}/following`);
   return res.data;
 };
+
+export const fetchUserPortfolio = async (username) => {
+  const res = await API.get(`/users/${username}/portfolio`);
+  return res.data;
+};
+
+
+export const fetchPortfolioTrades = async (portfolioId, options = {}) => {
+  const res = await API.get(`/portfolio/${portfolioId}/trades`, {
+    params: {
+      limit: 50,
+      ...options,
+    },
+  });
+  return res.data;
+};
