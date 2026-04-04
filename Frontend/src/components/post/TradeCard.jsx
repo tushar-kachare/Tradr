@@ -34,6 +34,7 @@ const formatProfitLoss = (value) => {
 };
 
 const TradeCard = ({ trade , onClick }) => {
+
   if (!trade) return null;
 
   const prices = useLivePriceStore((state) => state.prices);

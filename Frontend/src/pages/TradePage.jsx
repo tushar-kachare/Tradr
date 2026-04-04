@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { closeTradeById, getTradeById } from "../api/tradeApi";
+import { closeTradeById, getTradeById, updateTradeById } from "../api/tradeApi";
 import TradeCard from "../components/post/TradeCard";
+import { useAuth } from "../context/AuthContext";
+
 import {
   ArrowLeft,
   User,
@@ -12,6 +14,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 const TradePage = () => {
+  const { user: currentUser } = useAuth();
   const { tradeId } = useParams();
   const navigate = useNavigate();
 
@@ -21,6 +24,8 @@ const TradePage = () => {
   const [editModal, setEditModal] = useState(false);
   const [closeModal, setCloseModal] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [saving, setSaving] = useState(false); // NEW
+  const [editError, setEditError] = useState(null); // NEW — inline modal error
   const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
@@ -33,6 +38,7 @@ const TradePage = () => {
           targetPrice: res.trade.targetPrice,
           stopLoss: res.trade.stopLoss,
           strategy: res.trade.strategy ?? "",
+          holdTime: res.trade.holdTime ?? "", // ADD
         });
       } catch (err) {
         setError("Failed to load trade.");
@@ -42,6 +48,70 @@ const TradePage = () => {
     };
     fetchTrade();
   }, [tradeId]);
+
+  const validateEditForm = () => {
+    const { targetPrice, stopLoss, strategy } = editForm;
+
+    const hasAtLeastOne =
+      String(targetPrice).trim() ||
+      String(stopLoss).trim() ||
+      String(strategy).trim() ||
+      String(holdTime).trim();
+
+    if (!hasAtLeastOne) {
+      return "Please update at least one field.";
+    }
+
+    const entry = parseFloat(trade.entryPrice);
+
+    if (targetPrice && !isNaN(parseFloat(targetPrice))) {
+      const tp = parseFloat(targetPrice);
+      if (trade.tradeType === "long" && tp <= entry) {
+        return "Take profit must be above entry price for a long trade.";
+      }
+      if (trade.tradeType === "short" && tp >= entry) {
+        return "Take profit must be below entry price for a short trade.";
+      }
+    }
+
+    return null;
+  };
+
+  const handleEdit = async () => {
+    setEditError(null);
+
+    // Client side validation
+    const validateError = validateEditForm();
+    if (validateError) {
+      setEditError(validateError);
+      return;
+    }
+
+    // Only send fields that have a value
+    const payload = {};
+    if (String(editForm.targetPrice).trim())
+      payload.targetPrice = editForm.targetPrice;
+    if (String(editForm.stopLoss).trim()) payload.stopLoss = editForm.stopLoss;
+    if (String(editForm.strategy).trim()) payload.strategy = editForm.strategy;
+    if (String(editForm.holdTime).trim()) payload.holdTime = editForm.holdTime;
+
+    try {
+      setSaving(true);
+      console.log(payload);
+
+      const res = await updateTradeById(tradeId, payload);
+
+      setTrade(res.trade);
+      setEditModal(false);
+      toast.success("Trade updated!");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ?? "Failed to update trade. Try again.";
+      setEditError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleClose = async () => {
     try {
@@ -59,6 +129,7 @@ const TradePage = () => {
     }
   };
 
+  const isOwner = trade?.userId === currentUser?.id;
   if (loading)
     return (
       <div className="flex items-center justify-center py-24 text-sm text-gray-500">
@@ -124,7 +195,7 @@ const TradePage = () => {
       <TradeCard trade={trade} />
 
       {/* Actions */}
-      {trade.status === "open" && (
+      {trade.status === "open" && trade.userId === currentUser?.id && (
         <div className="mt-4 flex gap-3">
           <button
             onClick={() => setEditModal(true)}
@@ -169,38 +240,69 @@ const TradePage = () => {
                 label: "Take Profit",
                 key: "targetPrice",
                 placeholder: "e.g. 8.74",
+                type: "number",
               },
-              { label: "Stop Loss", key: "stopLoss", placeholder: "e.g. 8.64" },
+              {
+                label: "Stop Loss",
+                key: "stopLoss",
+                placeholder: "e.g. 8.64",
+                type: "number",
+              },
               {
                 label: "Strategy",
                 key: "strategy",
                 placeholder: "e.g. Breakout",
+                type: "text",
               },
-            ].map(({ label, key, placeholder }) => (
+              {
+                label: "Hold Time",
+                key: "holdTime",
+                placeholder: "e.g. 2-3 weeks",
+                type: "text",
+              }, // ADD
+            ].map(({ label, key, placeholder, type }) => (
               <div key={key} className="mb-4">
                 <label className="mb-1.5 block text-xs uppercase tracking-widest text-gray-500">
                   {label}
                 </label>
                 <input
+                  type={type}
                   value={editForm[key] ?? ""}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, [key]: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    setEditError(null); // clear error on change
+                    setEditForm((f) => ({ ...f, [key]: e.target.value }));
+                  }}
                   placeholder={placeholder}
                   className="w-full rounded-xl border border-white/8 bg-white/5 px-3 py-2.5 text-sm text-white outline-none transition-colors focus:border-violet-500/50 placeholder:text-gray-600"
                 />
               </div>
             ))}
 
+            {/* Inline error — shows both client + server errors */}
+            {editError && (
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2.5">
+                <AlertTriangle
+                  size={13}
+                  className="mt-0.5 shrink-0 text-rose-400"
+                />
+                <p className="text-xs text-rose-300">{editError}</p>
+              </div>
+            )}
+
             <div className="mt-2 flex gap-3">
               <button
                 onClick={() => setEditModal(false)}
-                className="flex-1 rounded-xl border border-white/8 bg-white/5 py-2.5 text-sm text-gray-400 hover:bg-white/8 transition-colors"
+                disabled={saving}
+                className="flex-1 rounded-xl border border-white/8 bg-white/5 py-2.5 text-sm text-gray-400 hover:bg-white/8 transition-colors disabled:opacity-40"
               >
                 Cancel
               </button>
-              <button className="flex-1 rounded-xl border border-violet-500/25 bg-violet-500/15 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-500/20 transition-colors">
-                Save changes
+              <button
+                onClick={handleEdit}
+                disabled={saving}
+                className="flex-1 rounded-xl border border-violet-500/25 bg-violet-500/15 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-500/20 transition-colors disabled:opacity-40"
+              >
+                {saving ? "Saving..." : "Save changes"}
               </button>
             </div>
           </div>

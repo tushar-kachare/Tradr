@@ -1,8 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../../context/AuthContext";
 import TradeCard from "../post/TradeCard";
 
 const PortfolioTradesSection = ({ trades, activeTab, loading, error }) => {
   const navigate = useNavigate();
+  const {user} = useAuth();
   if (loading) {
     return (
       <div className="px-4 py-6">

@@ -48,7 +48,7 @@ const ProfilePage = () => {
   return (
     <div className="max-w-2xl mx-auto w-full">
       <ProfileHeader profile={profile} />
-      <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} user={profile.user}/>
       <ProfileContent activeTab={activeTab} profile={profile} />
     </div>
   );

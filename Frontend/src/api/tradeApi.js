@@ -11,3 +11,10 @@ export const closeTradeById = async (tradeId) => {
     const res = await API.patch(`/trades/${tradeId}/close`);
     return res.data;
 }
+
+export const updateTradeById = async (tradeId , payLoad) => {
+    const res = await API.patch(`/trades/${tradeId}` , payLoad);
+    console.log(res.data);
+    
+    return res.data;
+}

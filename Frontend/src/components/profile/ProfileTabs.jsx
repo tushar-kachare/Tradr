@@ -1,6 +1,16 @@
-const tabs = ["portfolios", "posts", "likes", "bookmarks"];
+import { useAuth } from "../../context/AuthContext";
 
-const ProfileTabs = ({ activeTab, setActiveTab }) => {
+const ProfileTabs = ({ activeTab, setActiveTab, user }) => {
+  const { user: currentUser } = useAuth();
+  const isOwner = currentUser?.id === user?.id;
+
+  const tabs = [
+    "portfolios",
+    "posts",
+    "likes",
+    ...(isOwner ? ["bookmarks"] : []), // only show for own profile
+  ];
+
   return (
     <div className="relative border-b border-gray-800">
       <div className="flex">

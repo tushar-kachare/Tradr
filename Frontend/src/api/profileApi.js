@@ -5,8 +5,10 @@ export const fetchProfile = async (username) => {
   return res.data;
 };
 
-export const fetchUserPosts = async (userId) => {
-  const res = await API.get(`/users/${userId}/posts`);
+export const fetchUserPosts = async (userId, params = {}) => {
+  console.log(params);
+  
+  const res = await API.get(`/users/${userId}/posts`, { params });
   return res.data;
 };
 export const followUser = async (username) => {
@@ -17,12 +19,12 @@ export const followUser = async (username) => {
 export const unFollowUser = async (username) => {
   await API.delete(`/users/${username}/follow`);
 };
-export const fetchUserLikes = async (userId) => {
-  const res = await API.get(`/users/${userId}/likes`);
+export const fetchUserLikes = async (userId, params = {}) => {
+  const res = await API.get(`/users/${userId}/likes`, { params });
   return res.data;
 };
-export const fetchUserBookmarks = async (userId) => {
-  const res = await API.get(`/users/${userId}/bookmarks`);
+export const fetchUserBookmarks = async (userId, params = {}) => {
+  const res = await API.get(`/users/${userId}/bookmarks`, { params });
   return res.data;
 };
 
@@ -40,7 +42,6 @@ export const fetchUserPortfolio = async (username) => {
   const res = await API.get(`/users/${username}/portfolio`);
   return res.data;
 };
-
 
 export const fetchPortfolioTrades = async (portfolioId, options = {}) => {
   const res = await API.get(`/portfolio/${portfolioId}/trades`, {
