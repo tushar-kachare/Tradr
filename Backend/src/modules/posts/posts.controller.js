@@ -435,15 +435,19 @@ const getPost = async (req, res) => {
           where: { isDeleted: false },
           select: {
             id: true,
+            portfolioId: true,
             coinSymbol: true,
             coinName: true,
             tradeType: true,
             status: true,
             entryPrice: true,
+            exitPrice: true,
             targetPrice: true,
             stopLoss: true,
             currentPrice: true,
             profitLoss: true,
+            leverage: true,
+            positionSize: true,
             strategy: true,
             holdTime: true,
             closedAt: true,
@@ -476,15 +480,19 @@ const getPost = async (req, res) => {
               where: { isDeleted: false },
               select: {
                 id: true,
+                portfolioId: true,
                 coinSymbol: true,
                 coinName: true,
                 tradeType: true,
                 status: true,
                 entryPrice: true,
+                exitPrice: true,
                 targetPrice: true,
                 stopLoss: true,
                 currentPrice: true,
                 profitLoss: true,
+                leverage: true,
+                positionSize: true,
                 strategy: true,
                 holdTime: true,
                 closedAt: true,
@@ -510,33 +518,32 @@ const getPost = async (req, res) => {
       });
     }
 
-    // // Check isLiked / isBookmarked if user is logged in
-    // let isLiked = false;
-    // let isBookmarked = false;
+    let isLiked = false;
+    let isBookmarked = false;
 
-    // if (requestingUserId) {
-    //   const [like, bookmark] = await Promise.all([
-    //     prisma.like.findUnique({
-    //       where: {
-    //         userId_postId: {
-    //           userId: requestingUserId,
-    //           postId: post.id,
-    //         },
-    //       },
-    //     }),
-    //     prisma.bookmark.findUnique({
-    //       where: {
-    //         userId_postId: {
-    //           userId: requestingUserId,
-    //           postId: post.id,
-    //         },
-    //       },
-    //     }),
-    //   ]);
+    if (requestingUserId) {
+      const [like, bookmark] = await Promise.all([
+        prisma.like.findUnique({
+          where: {
+            userId_postId: {
+              userId: requestingUserId,
+              postId: post.id,
+            },
+          },
+        }),
+        prisma.bookmark.findUnique({
+          where: {
+            userId_postId: {
+              userId: requestingUserId,
+              postId: post.id,
+            },
+          },
+        }),
+      ]);
 
-    //   isLiked = !!like;
-    //   isBookmarked = !!bookmark;
-    // }
+      isLiked = !!like;
+      isBookmarked = !!bookmark;
+    }
 
     // Shape the original post if this is a repost
     const originalPost = post.originalPost
@@ -569,8 +576,8 @@ const getPost = async (req, res) => {
         user: post.user,
         trade: post.trade ?? null,
         originalPost,
-        // isLiked,
-        // isBookmarked,
+        isLiked,
+        isBookmarked,
       },
     });
   } catch (err) {

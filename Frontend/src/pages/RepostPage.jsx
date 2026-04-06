@@ -12,7 +12,7 @@ const RepostPage = () => {
   const navigate = useNavigate();
   const { postId } = useParams();
   console.log(postId);
-  
+
   const [content, setContent] = useState("");
   const [originalPost, setOriginalPost] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ const RepostPage = () => {
   useEffect(() => {
     const fetchPost = async () => {
       console.log(postId);
-      
+
       try {
         const res = await getPostById(postId);
         setOriginalPost(res.data.post);
@@ -67,42 +67,39 @@ const RepostPage = () => {
   };
 
   return (
-    <div className="w-[500px] bg-[#0f0f0f] border border-gray-700 rounded-2xl p-6 shadow-xl">
-      
-      <h2 className="text-xl text-white font-semibold mb-4">
-        Repost
-      </h2>
+    <div className="w-[700px] bg-[#0f0f0f] border border-gray-700 rounded-2xl p-4 shadow-xl">
+      <h2 className="text-lg text-white font-semibold mb-2">Repost</h2>
 
       {/* TEXT ONLY */}
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Add your thoughts..."
-        className="w-full h-24 bg-[#1a1a1a] p-3 rounded-lg text-white border border-gray-700 outline-none resize-none"
+        className="w-full h-20 bg-[#1a1a1a] p-2 rounded-lg text-white border border-gray-700 outline-none resize-none"
       />
 
       {/* ORIGINAL POST */}
       {originalPost && (
-        <RepostWrapper>
-          <PostHeader
-            user={originalPost.user}
-            createdAt={originalPost.createdAt}
-          />
-          <PostContent
-            content={originalPost.content}
-            media={originalPost.mediaUrls}
-          />
-          {originalPost.trade && (
-            <TradeCard trade={originalPost.trade} />
-          )}
-        </RepostWrapper>
+        <div className="mt-3">
+          <RepostWrapper>
+            <PostHeader
+              user={originalPost.user}
+              createdAt={originalPost.createdAt}
+            />
+            <PostContent
+              content={originalPost.content}
+              media={originalPost.mediaUrls}
+            />
+            {originalPost.trade && <TradeCard trade={originalPost.trade} />}
+          </RepostWrapper>
+        </div>
       )}
 
       {/* ACTIONS */}
-      <div className="flex justify-end gap-3 mt-4">
+      <div className="flex justify-end gap-2 mt-3">
         <button
           onClick={() => navigate("/")}
-          className="px-4 py-2 bg-red-700 rounded-lg hover:bg-red-600"
+          className="px-3 py-1.5 bg-red-700 rounded-lg hover:bg-red-600"
         >
           Cancel
         </button>
@@ -110,9 +107,9 @@ const RepostPage = () => {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-1.5 bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50"
         >
-          {loading && <Loader2 size={16} className="animate-spin" />}
+          {loading && <Loader2 size={14} className="animate-spin" />}
           {loading ? "Reposting..." : "Repost"}
         </button>
       </div>

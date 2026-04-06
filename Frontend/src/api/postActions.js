@@ -28,6 +28,15 @@ export const shareTradePost = async ({ content, tradeId }) => {
 export const getPostById = async (postId) => {
   return API.get(`/posts/${postId}`);
 };
+
+export const getPostComments = async (postId, params) => {
+  return API.get(`/posts/${postId}/comments`, { params });
+};
+
+export const createPostComment = async (postId, content) => {
+  return API.post(`/posts/${postId}/comments`, { content });
+};
+
 export const repostPost = async (formData) => {
   return API.post("/posts/", formData);
 };

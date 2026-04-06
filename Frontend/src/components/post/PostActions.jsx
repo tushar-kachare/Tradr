@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, MessageCircle, Repeat2, Bookmark } from "lucide-react";
 import {
   likePost,
@@ -20,7 +20,24 @@ const PostActions = ({ post }) => {
     reposts: post.repostsCount || 0,
   });
 
-  const handleLike = async () => {
+  useEffect(() => {
+    setLiked(post.isLiked || false);
+    setBookmarked(post.isBookmarked || false);
+    setCounts({
+      likes: post.likesCount || 0,
+      comments: post.commentsCount || 0,
+      reposts: post.repostsCount || 0,
+    });
+  }, [
+    post.isLiked,
+    post.isBookmarked,
+    post.likesCount,
+    post.commentsCount,
+    post.repostsCount,
+  ]);
+
+  const handleLike = async (event) => {
+    event.stopPropagation();
     const newLiked = !liked;
 
     setLiked(newLiked);
@@ -46,7 +63,8 @@ const PostActions = ({ post }) => {
     }
   };
 
-  const handleBookmark = async () => {
+  const handleBookmark = async (event) => {
+    event.stopPropagation();
     const newBookmarked = !bookmarked;
 
     // ✅ optimistic UI
@@ -67,7 +85,10 @@ const PostActions = ({ post }) => {
   };
 
   return (
-    <div className="flex justify-between items-center mt-3 text-gray-400">
+    <div
+      className="flex items-center justify-between text-gray-400"
+      onClick={(event) => event.stopPropagation()}
+    >
       {/* LEFT ACTIONS */}
       <div className="flex items-center gap-6">
         {/* LIKE */}
@@ -82,20 +103,27 @@ const PostActions = ({ post }) => {
           <span className="text-sm">{counts.likes}</span>
         </button>
 
-        {/* COMMENT (leave as-is for now) */}
-        <button className="flex items-center gap-2 hover:text-blue-400 transition">
+        {/* COMMENT */}
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+            navigate(`/post/${post.id}`);
+          }}
+          className="flex items-center gap-2 transition hover:text-blue-400"
+        >
           <MessageCircle size={18} />
           <span className="text-sm">{counts.comments}</span>
         </button>
 
         {/* REPOST */}
         <button
-          onClick={() =>
+          onClick={(event) => {
+            event.stopPropagation();
             navigate(`/repost/${post.id}`, {
               state: { backgroundLocation: location },
-            })
-          }
-          className="flex items-center gap-2 hover:text-green-400 transition"
+            });
+          }}
+          className="flex items-center gap-2 transition hover:text-green-400"
         >
           <Repeat2 size={18} />
           <span className="text-sm">{counts.reposts}</span>
@@ -105,7 +133,7 @@ const PostActions = ({ post }) => {
       {/* RIGHT ACTION */}
       <button
         onClick={handleBookmark}
-        className="hover:text-yellow-400 transition"
+        className="transition hover:text-yellow-400"
       >
         <Bookmark
           size={18}

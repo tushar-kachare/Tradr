@@ -11,6 +11,7 @@ import FollowListPage from "./pages/FollowListPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import TradePage from "./pages/TradePage";
 import RepostPage from "./pages/RepostPage";
+import SinglePostPage from "./pages/SinglePostPage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -38,6 +39,7 @@ const AppRoutes = () => {
           />
           <Route path="portfolio/:portfolioId" element={<PortfolioPage />} />
           <Route path="trades/:tradeId" element={<TradePage />} />
+          <Route path="post/:postId" element={<SinglePostPage />} />
         </Route>
 
         <Route path="/login" element={<Login />} />

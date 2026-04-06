@@ -12,7 +12,7 @@ const PostContent = ({ content, media = [] }) => {
   };
 
   return (
-    <div className="mt-3 space-y-3">
+    <div className="space-y-3">
       {content && (
         <p className="text-gray-300 leading-relaxed whitespace-pre-line">
           {content}
