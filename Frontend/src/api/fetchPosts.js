@@ -7,3 +7,4 @@ export const fetchExplorePosts = async (params) => {
 export const fetchFeedPosts = async (params) => {
   return API.get("/posts/feed", { params });
 };
+

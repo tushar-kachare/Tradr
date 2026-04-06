@@ -10,6 +10,7 @@ import ProfilePage from "./pages/ProfilePage";
 import FollowListPage from "./pages/FollowListPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import TradePage from "./pages/TradePage";
+import RepostPage from "./pages/RepostPage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -41,13 +42,39 @@ const AppRoutes = () => {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route
+          path="/repost/:postId"
+          element={
+            backgroundLocation ? null : (
+              <ProtectedRoute>
+                <RepostPage />
+              </ProtectedRoute>
+            )
+          }
+        />
       </Routes>
 
       {/* Modal Overlay */}
-      {backgroundLocation && location.pathname === "/create-post" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <CreatePost />
-        </div>
+      {backgroundLocation && (
+        <Routes>
+          <Route
+            path="/create-post"
+            element={
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <CreatePost />
+              </div>
+            }
+          />
+
+          <Route
+            path="/repost/:postId"
+            element={
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <RepostPage />
+              </div>
+            }
+          />
+        </Routes>
       )}
     </>
   );

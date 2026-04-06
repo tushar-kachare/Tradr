@@ -6,8 +6,11 @@ import {
   bookmarkPost,
   unbookmarkPost,
 } from "../../api/postActions";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const PostActions = ({ post }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [liked, setLiked] = useState(post.isLiked || false);
   const [bookmarked, setBookmarked] = useState(post.isBookmarked || false);
 
@@ -86,7 +89,14 @@ const PostActions = ({ post }) => {
         </button>
 
         {/* REPOST */}
-        <button className="flex items-center gap-2 hover:text-green-400 transition">
+        <button
+          onClick={() =>
+            navigate(`/repost/${post.id}`, {
+              state: { backgroundLocation: location },
+            })
+          }
+          className="flex items-center gap-2 hover:text-green-400 transition"
+        >
           <Repeat2 size={18} />
           <span className="text-sm">{counts.reposts}</span>
         </button>

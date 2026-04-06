@@ -5,8 +5,8 @@ const jwt = require("jsonwebtoken");
 async function register(req, res) {
   try {
     const { username, email, password } = req.body;
-    console.log(username , email , password);
-    
+    console.log(username, email, password);
+
     // check missing fields
     if (!username || !email || !password) {
       return res.status(400).json({
@@ -23,11 +23,11 @@ async function register(req, res) {
     });
 
     console.log(existingUser);
-    
+
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message:"An account with this email already exists",
+        message: "An account with this email already exists",
       });
     }
 
@@ -126,14 +126,27 @@ async function login(req, res) {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
+    const safeUser = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      website: user.website,
+      location: user.location,
+      role: user.role,
+      isVerified: user.isVerified,
+      followersCount: user.followersCount,
+      followingCount: user.followingCount,
+      postsCount: user.postsCount,
+      tradesCount: user.tradesCount,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+    };
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
+      user: safeUser,
     });
   } catch (error) {
     console.error(error);
