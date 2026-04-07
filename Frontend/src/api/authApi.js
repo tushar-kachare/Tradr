@@ -7,3 +7,6 @@ export const loginUser = (data) => {
 export const registerUser = (data) => {
     return API.post('/auth/register' , data);
 }
+export const logoutUser = () => {
+    return API.post('/auth/logout');
+}

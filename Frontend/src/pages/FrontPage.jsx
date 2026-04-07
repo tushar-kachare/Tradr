@@ -13,12 +13,12 @@ const FrontPage = () => {
     <div className="flex bg-[#0f0f0f] h-screen text-white overflow-hidden">
 
       {/* Sidebar */}
-      <div className="w-[18%] border-r border-gray-800 p-6">
+      <div className="w-[22%] border-r border-gray-800 p-6">
         <Sidebar />
       </div>
 
       {/* Middle Section */}
-      <div className="w-[60%] relative overflow-y-auto border-x border-[#21262d] p-6">
+      <div className="w-[50%] relative overflow-y-auto border-x border-[#21262d] p-6">
 
         {/* 👉 Show background route (Feed) */}
         <Outlet context={{ location: backgroundLocation || location }} />
@@ -37,7 +37,7 @@ const FrontPage = () => {
       </div>
 
       {/* Right Panel */}
-      <div className="w-[22%] border-l border-gray-800 p-6">
+      <div className="w-[28%] border-l border-gray-800 p-6">
         <RightPanel />
       </div>
     </div>

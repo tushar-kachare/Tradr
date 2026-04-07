@@ -53,7 +53,14 @@ const PostCard = ({ post, disableNavigation = false }) => {
 
               <RepostWrapper>
                 {originalPostAvailable ? (
-                  <>
+                  <div
+                    data-stop-post-nav // already stops outer card nav
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/post/${originalPost.id}`);
+                    }}
+                    className="cursor-pointer"
+                  >
                     <PostHeader
                       user={originalPost.user}
                       createdAt={originalPost.createdAt}
@@ -65,7 +72,7 @@ const PostCard = ({ post, disableNavigation = false }) => {
                     {originalPost.trade && (
                       <TradeCard trade={originalPost.trade} />
                     )}
-                  </>
+                  </div>
                 ) : (
                   <div className="rounded-xl bg-white/5 px-4 py-5 text-sm text-gray-400">
                     This original post is no longer available.

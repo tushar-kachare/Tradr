@@ -1319,6 +1319,55 @@ const searchUser = async (req, res) => {
   }
 };
 
+const getTopUsers = async (req, res) => {
+  try {
+    const { limit = 5 } = req.query;
+    const currentUserId = req.user.userId;
+
+    const limitNum = parseInt(limit);
+    if (isNaN(limitNum) || limitNum < 1 || limitNum > 20) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Limit must be between 1 and 20" });
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        NOT: { id: currentUserId }, // exclude self
+      },
+      orderBy: { followersCount: "desc" },
+      take: limitNum,
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        isVerified: true,
+        followersCount: true,
+        followers: {
+          where: { followerId: currentUserId },
+          select: { id: true },
+        },
+      },
+    });
+    const formattedUsers = users.map((u) => ({
+      ...u,
+      isFollowing: u.followers.length > 0,
+      followers: undefined,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: { users: formattedUsers },
+    });
+  } catch (err) {
+    console.error("getTopUsers Error: ", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 // PATCH /users/me/avatar
 const updateAvatar = async (req, res) => {
   try {
@@ -1366,5 +1415,6 @@ module.exports = {
   getUserLikes,
   getUserBookmarks,
   searchUser,
+  getTopUsers,
   updateAvatar,
 };

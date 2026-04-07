@@ -21,6 +21,7 @@ router.patch(
   usersController.updateAvatar,
 );
 router.get("/search", authenticate, usersController.searchUser);
+router.get('/top' , authenticate , usersController.getTopUsers)
 // ** Keep dynamic API at bottom ** //
 router.post("/:username/follow", authenticate, usersController.followUser);
 router.delete("/:username/follow", authenticate, usersController.unFollowUser);
