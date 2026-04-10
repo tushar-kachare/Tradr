@@ -11,18 +11,19 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { getTopUsers, searchUser } from "../../api/userApis";
 import { logoutUser } from "../../api/authApi";
+import { getDisplayName, getUserInitial } from "../../utils/userDisplay";
 
 // Improved Avatar (controlled sizing + better UI)
-const Avatar = ({ url, username, size = 40 }) => (
+const Avatar = ({ url, user, size = 40 }) => (
   <div
     style={{ width: size, height: size }}
     className="rounded-full bg-[#1a1d26] border border-white/10 flex items-center justify-center overflow-hidden shrink-0"
   >
     {url ? (
-      <img src={url} alt={username} className="w-full h-full object-cover" />
+      <img src={url} alt={getDisplayName(user)} className="w-full h-full object-cover" />
     ) : (
       <span className="text-white font-semibold text-sm uppercase">
-        {username?.[0] || "?"}
+        {getUserInitial(user)}
       </span>
     )}
   </div>
@@ -34,15 +35,15 @@ const UserRow = ({ user, navigate }) => (
     onClick={() => navigate(`/profile/${user.username}`)}
     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 cursor-pointer transition"
   >
-    <Avatar url={user.avatarUrl} username={user.username} size={42} />
+    <Avatar url={user.avatarUrl} user={user} size={42} />
 
     <div className="flex flex-col min-w-0 flex-1">
       <span className="text-[14px] text-white font-medium truncate">
-        @{user.username}
+        {getDisplayName(user)}
       </span>
       <span className="text-xs text-gray-400 flex items-center gap-1">
         <Users className="w-3 h-3" />
-        {user.followersCount} followers
+        @{user.username} · {user.followersCount} followers
       </span>
     </div>
   </div>
@@ -119,13 +120,13 @@ const RightPanel = () => {
           className="flex items-center justify-between cursor-pointer"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar url={user?.avatarUrl} username={user?.username} size={50} />
+            <Avatar url={user?.avatarUrl} user={user} size={50} />
             <div className="flex flex-col min-w-0">
               <span className="text-[15px] font-semibold truncate">
-                @{user?.username}
+                {getDisplayName(user)}
               </span>
               <span className="text-xs text-gray-400 truncate">
-                {user?.email}
+                @{user?.username}
               </span>
             </div>
           </div>

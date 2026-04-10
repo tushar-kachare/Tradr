@@ -9,9 +9,10 @@ import {
   unFollowUser,
 } from "../api/profileApi";
 import { useAuth } from "../context/AuthContext";
+import { getDisplayName, getUserInitial } from "../utils/userDisplay";
 
-const FollowUserRow = ({ user,currentUser, onToggleFollow, disabled }) => {
-  const initials = (user.username || "U").slice(0, 1).toUpperCase();
+const FollowUserRow = ({ user, currentUser, onToggleFollow, disabled }) => {
+  const initials = getUserInitial(user);
 
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4">
@@ -33,7 +34,9 @@ const FollowUserRow = ({ user,currentUser, onToggleFollow, disabled }) => {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="truncate font-semibold text-white">{user.username}</p>
+            <p className="truncate font-semibold text-white">
+              {getDisplayName(user)}
+            </p>
             {user.isVerified && (
               <span className="text-sm text-blue-400">✔</span>
             )}
@@ -42,24 +45,26 @@ const FollowUserRow = ({ user,currentUser, onToggleFollow, disabled }) => {
         </div>
       </Link>
 
-      {currentUser.username != user.username && <button
-        type="button"
-        onClick={() => onToggleFollow(user)}
-        disabled={disabled}
-        className={`min-w-[96px] rounded-full px-4 py-2 text-sm font-medium transition ${
-          user.isFollowing
-            ? "bg-white/10 text-white hover:bg-white/20"
-            : "bg-blue-500 text-white hover:bg-blue-600"
-        } disabled:cursor-not-allowed disabled:opacity-60`}
-      >
-        {user.isFollowing ? "Following" : "Follow"}
-      </button>}
+      {currentUser.username != user.username && (
+        <button
+          type="button"
+          onClick={() => onToggleFollow(user)}
+          disabled={disabled}
+          className={`min-w-[96px] rounded-full px-4 py-2 text-sm font-medium transition ${
+            user.isFollowing
+              ? "bg-white/10 text-white hover:bg-white/20"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          } disabled:cursor-not-allowed disabled:opacity-60`}
+        >
+          {user.isFollowing ? "Following" : "Follow"}
+        </button>
+      )}
     </div>
   );
 };
 
 const FollowListPage = () => {
-  const {user: currentUser} = useAuth();
+  const { user: currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { username } = useParams();
@@ -98,7 +103,7 @@ const FollowListPage = () => {
             ? (listRes.followers ?? [])
             : (listRes.following ?? []),
         );
-      } catch (err) {
+      } catch {
         setError(`Failed to load ${activeTab}`);
         setUsers([]);
       } finally {
@@ -136,7 +141,7 @@ const FollowListPage = () => {
       } else {
         await followUser(targetUser.username);
       }
-    } catch (err) {
+    } catch {
       setUsers(previousUsers);
     } finally {
       setPendingUsername(null);
@@ -159,7 +164,7 @@ const FollowListPage = () => {
             </button>
 
             <p className="text-center text-base font-semibold text-white">
-              @{username}
+              {profile?.user ? getDisplayName(profile.user) : `@${username}`}
             </p>
 
             <div />

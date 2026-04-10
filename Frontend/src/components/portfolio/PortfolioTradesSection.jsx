@@ -36,15 +36,6 @@ const PortfolioTradesSection = ({
       <div className="px-4 py-6">
         <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-gray-400">
           <p>No {activeTab} trades found.</p>
-          {canCreateTrade && portfolio && activeTab === "open" && (
-            <Link
-              to="/create-trade"
-              state={{ portfolio, source: "portfolio-empty-state" }}
-              className="mt-4 inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              Create your first trade
-            </Link>
-          )}
         </div>
       </div>
     );

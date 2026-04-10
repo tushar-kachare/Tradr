@@ -2,7 +2,6 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const PortfolioPageHeader = ({ username, portfolioName }) => {
-  console.log(username);
   
   const navigate = useNavigate();
 

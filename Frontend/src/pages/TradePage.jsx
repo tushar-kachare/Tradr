@@ -15,6 +15,7 @@ import {
   Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { getDisplayName } from "../utils/userDisplay";
 const TradePage = () => {
   const { user: currentUser } = useAuth();
   const { tradeId } = useParams();
@@ -46,7 +47,7 @@ const TradePage = () => {
           strategy: res.trade.strategy ?? "",
           holdTime: res.trade.holdTime ?? "", // ADD
         });
-      } catch (err) {
+      } catch {
         setError("Failed to load trade.");
       } finally {
         setLoading(false);
@@ -157,7 +158,6 @@ const TradePage = () => {
     }
   };
 
-  const isOwner = trade?.userId === currentUser?.id;
   if (loading)
     return (
       <div className="flex items-center justify-center py-24 text-sm text-gray-500">
@@ -198,10 +198,10 @@ const TradePage = () => {
         </div>
         <div>
           <p className="text-sm font-medium text-white">
-            @{user?.username ?? "unknown"}
+            {getDisplayName(user)}
           </p>
           <p className="text-xs text-gray-500">
-            {trade.coinName} · {trade.tradingPair}
+            @{user?.username ?? "unknown"} · {trade.coinName} · {trade.tradingPair}
           </p>
         </div>
         <div className="ml-auto">
@@ -237,20 +237,20 @@ const TradePage = () => {
 
         {trade.status === "open" && trade.userId === currentUser?.id && (
           <>
-          <button
-            onClick={() => setEditModal(true)}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white hover:bg-white/10 transition-colors"
-          >
-            <Pencil size={14} />
-            Edit trade
-          </button>
-          <button
-            onClick={() => setCloseModal(true)}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 py-3 text-sm font-medium text-rose-300 hover:bg-rose-500/20 transition-colors"
-          >
-            <TrendingUp size={14} />
-            Close position
-          </button>
+            <button
+              onClick={() => setEditModal(true)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+            >
+              <Pencil size={14} />
+              Edit trade
+            </button>
+            <button
+              onClick={() => setCloseModal(true)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 py-3 text-sm font-medium text-rose-300 hover:bg-rose-500/20 transition-colors"
+            >
+              <TrendingUp size={14} />
+              Close position
+            </button>
           </>
         )}
       </div>
@@ -374,12 +374,14 @@ const TradePage = () => {
             <div className="mb-4 rounded-xl border border-white/8 bg-white/5 px-4 py-3 text-sm">
               <div className="flex justify-between text-gray-400">
                 <span>Coin</span>
-                <span className="font-medium text-white">{trade.tradingPair}</span>
+                <span className="font-medium text-white">
+                  {trade.tradingPair}
+                </span>
               </div>
               <div className="mt-2 flex justify-between text-gray-400">
                 <span>Owner</span>
                 <span className="font-medium text-white">
-                  @{trade.user?.username ?? "unknown"}
+                  {getDisplayName(trade.user)}
                 </span>
               </div>
             </div>

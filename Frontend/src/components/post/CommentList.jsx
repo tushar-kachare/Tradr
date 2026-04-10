@@ -1,3 +1,5 @@
+import { getDisplayName, getUserInitial } from "../../utils/userDisplay";
+
 const formatCommentDate = (dateValue) => {
   if (!dateValue) return "";
 
@@ -50,9 +52,7 @@ const CommentList = ({ comments = [], loading = false, error = "" }) => {
   return (
     <div className="overflow-hidden  bg-[#0f0f0f]">
       {comments.map((comment) => {
-        const initials = (comment.user?.username || "U")
-          .slice(0, 1)
-          .toUpperCase();
+        const initials = getUserInitial(comment.user);
         const timestamp = formatCommentDate(comment.createdAt);
 
         return (
@@ -77,7 +77,7 @@ const CommentList = ({ comments = [], loading = false, error = "" }) => {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-sm">
                 <span className="truncate font-semibold text-white">
-                  {comment.user?.username || "Unknown user"}
+                  {getDisplayName(comment.user)}
                 </span>
                 {timestamp && (
                   <span className="text-gray-500">{timestamp}</span>

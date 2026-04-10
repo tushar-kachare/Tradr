@@ -4,6 +4,7 @@ import PostContent from "./PostContent";
 import PostHeader from "./PostHeader";
 import RepostWrapper from "./RepostWrapper";
 import TradeCard from "./TradeCard";
+import { getDisplayName } from "../../utils/userDisplay";
 
 const PostCard = ({ post, disableNavigation = false }) => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const PostCard = ({ post, disableNavigation = false }) => {
           {isRepost ? (
             <>
               <div className="mb-3 text-xs font-medium uppercase tracking-wide text-emerald-300">
-                Reposted by @{post.user?.username || "unknown"}
+                Reposted by {getDisplayName(post.user)}
               </div>
 
               <PostHeader user={post.user} createdAt={post.createdAt} />

@@ -6,14 +6,21 @@ import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfileContent from "../components/profile/ProfileContent";
 import { useAuth } from "../context/AuthContext";
 
-const loadProfileData = async ({ username, setLoading, setError, setProfile }) => {
+const loadProfileData = async ({
+  username,
+  setLoading,
+  setError,
+  setProfile,
+}) => {
   try {
     setLoading(true);
     setError(null);
     const res = await fetchProfile(username);
     setProfile(res);
+    return res;
   } catch {
     setError("Failed to load Profile");
+    return null;
   } finally {
     setLoading(false);
   }
@@ -21,7 +28,7 @@ const loadProfileData = async ({ username, setLoading, setError, setProfile }) =
 
 const ProfilePage = () => {
   const { username } = useParams();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, setUser } = useAuth();
 
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState("portfolios");
@@ -30,6 +37,21 @@ const ProfilePage = () => {
 
   const refreshProfile = async () =>
     loadProfileData({ username, setLoading, setError, setProfile });
+
+  const handleProfileUpdated = async (updatedUser) => {
+    const latestProfile = await refreshProfile();
+
+    setUser((previousUser) => {
+      if (!previousUser) {
+        return previousUser;
+      }
+
+      return {
+        ...previousUser,
+        ...(latestProfile?.user ?? updatedUser),
+      };
+    });
+  };
 
   useEffect(() => {
     loadProfileData({ username, setLoading, setError, setProfile });
@@ -52,8 +74,16 @@ const ProfilePage = () => {
 
   return (
     <div className="max-w-2xl mx-auto w-full">
-      <ProfileHeader profile={profile} />
-      <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} user={profile.user}/>
+      <ProfileHeader
+        profile={profile}
+        onProfileUpdated={handleProfileUpdated}
+        onRefreshProfile={refreshProfile}
+      />
+      <ProfileTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        user={profile.user}
+      />
       <ProfileContent
         activeTab={activeTab}
         profile={profile}

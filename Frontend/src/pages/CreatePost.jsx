@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPost } from "../api/postActions";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import toast from 'react-hot-toast'
+import toast from "react-hot-toast";
 const CreatePost = () => {
   useEffect(() => {
     const handleKey = (e) => {
@@ -56,7 +56,7 @@ const CreatePost = () => {
 
       const res = await createPost(formData);
       console.log(res.data);
-      toast.success("Post created!")
+      toast.success("Post created!");
       navigate("/");
     } catch (err) {
       console.log(err.response?.data || err.message);

@@ -324,54 +324,51 @@ const CreateTrade = () => {
 
   if (!portfolio) {
     return (
-      <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.18),_transparent_28%),linear-gradient(160deg,#11161d,#090c11)] text-white shadow-2xl">
-        <div className="border-b border-white/10 px-6 py-6">
-          <p className="text-xs uppercase tracking-[0.34em] text-emerald-300/80">
-            Create Trade
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold">
-            You need a portfolio first
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
-            Trades are created inside your portfolio so we can track allocation,
-            balance, and performance correctly.
-          </p>
-        </div>
+      <div className="mx-auto w-full max-w-xl text-white">
+        <div className="relative rounded-2xl border border-white/10 bg-[#0b0f14] shadow-lg">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-4 cursor-pointer top-4 rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white transition"
+          >
+            <ArrowLeft size={18} />
+          </button>
 
-        <div className="px-6 py-8">
-          <div className="rounded-[26px] border border-white/10 bg-white/5 p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
-                <BriefcaseBusiness size={22} />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">Set up your portfolio</h2>
-                <p className="mt-2 text-sm leading-6 text-gray-400">
-                  Create it from your profile page, then come back here to pick
-                  it and open a trade.
-                </p>
-              </div>
-            </div>
+          {/* Content */}
+          <div className="px-6 py-8">
+            {/* Header */}
+            <h1 className="text-xl font-semibold text-center text-gray-400">
+              Create your portfolio first
+            </h1>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            {/* Card */}
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-start gap-3">
+                {/* Icon */}
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-gray-300">
+                  <BriefcaseBusiness size={18} />
+                </div>
+
+                {/* Text */}
+                <div>
+                  <p className="text-sm font-medium text-gray-200">No portfolio found</p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Create one from your profile to start trading.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action */}
               <Link
                 to={
                   currentUser?.username
                     ? `/profile/${currentUser.username}`
                     : "/"
                 }
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-gray-300 px-4 py-2 text-sm font-medium text-black hover:bg-gray-400 transition"
               >
-                Go To Profile
+                Open profile
               </Link>
-
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="rounded-2xl border border-white/10 px-5 py-3 text-sm text-gray-300 transition hover:border-white/20 hover:bg-white/5"
-              >
-                Go Back
-              </button>
             </div>
           </div>
         </div>

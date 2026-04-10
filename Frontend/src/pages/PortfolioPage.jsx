@@ -40,7 +40,7 @@ const PortfolioPage = () => {
   const { user: currentUser } = useAuth();
   const { portfolioId } = useParams();
   const location = useLocation();
-  
+
   const portfolioFromState = location.state?.portfolio ?? null;
   const [portfolio, setPortfolio] = useState(null);
   const [activeTab, setActiveTab] = useState("open");
@@ -136,7 +136,7 @@ const PortfolioPage = () => {
 
   const username = portfolio?.user?.username;
   console.log(portfolio);
-  
+
   if (tradesError || !portfolio) {
     return (
       <div className="mt-10 text-center text-red-400">
@@ -150,24 +150,26 @@ const PortfolioPage = () => {
   const closedCount = tradeCounts.closed;
   const canCreateTrade = Boolean(
     currentUser?.username &&
-      username &&
-      currentUser.username.toLowerCase() === username.toLowerCase(),
+    username &&
+    currentUser.username.toLowerCase() === username.toLowerCase(),
   );
 
-  
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-[750px]">
-        <PortfolioPageHeader username={username} portfolioName={portfolio.name} />
+        <PortfolioPageHeader
+          username={username}
+          portfolioName={portfolio.name}
+        />
         {canCreateTrade && (
           <div className="px-4 pt-5">
             <Link
               to="/create-trade"
               state={{ portfolio, source: "portfolio-page" }}
-              className="inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              className="inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-3 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
             >
               <PlusCircle size={16} />
-              Create Trade In This Portfolio
+              Create Trade
             </Link>
           </div>
         )}

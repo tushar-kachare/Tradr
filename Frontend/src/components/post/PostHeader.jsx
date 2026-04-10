@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { getDisplayName, getUserInitial } from "../../utils/userDisplay";
 const formatPostDate = (dateValue) => {
   if (!dateValue) return "";
 
@@ -25,8 +26,12 @@ const formatPostDate = (dateValue) => {
 
 const PostHeader = ({ user, createdAt }) => {
   const timestamp = formatPostDate(createdAt);
-  const initials = (user?.username || "U").slice(0, 1).toUpperCase();
+  const initials = getUserInitial(user);
 
+  console.log(initials);
+  
+  console.log(getDisplayName(user));
+  
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -49,7 +54,7 @@ const PostHeader = ({ user, createdAt }) => {
         <div className="flex flex-col leading-tight">
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold">
-              {user?.username || "Unknown user"}
+              {getDisplayName(user)}
             </span>
 
             {user?.isVerified && (

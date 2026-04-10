@@ -1,47 +1,49 @@
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { followUser, unFollowUser } from "../../api/profileApi";
+import EditProfileModal from "./EditProfileModal";
+import { getDisplayName, getUserInitial } from "../../utils/userDisplay";
 
-const ProfileHeader = ({ profile }) => {
+const ProfileHeader = ({ profile, onProfileUpdated, onRefreshProfile }) => {
   const navigate = useNavigate();
+  const menuRef = useRef(null);
 
   const { user, isOwnProfile } = profile;
 
-  const [isFollowing, setIsFollowing] = useState(profile.isFollowing);
-  const [followersCount, setFollowersCount] = useState(user.followersCount);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
-    setIsFollowing(profile.isFollowing);
-    setFollowersCount(user.followersCount);
-  }, [profile.isFollowing, user.followersCount]);
+    if (!menuOpen) {
+      return undefined;
+    }
+
+    const handleOutsideClick = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [menuOpen]);
 
   const handleFollow = async () => {
     try {
-      if (isFollowing) {
-        // 🔴 UNFOLLOW
-        setIsFollowing(false);
-        setFollowersCount((prev) => prev - 1);
-
+      setFollowLoading(true);
+      if (profile.isFollowing) {
         await unFollowUser(user.username);
       } else {
-        // 🟢 FOLLOW
-        setIsFollowing(true);
-        setFollowersCount((prev) => prev + 1);
-
         await followUser(user.username);
       }
-    } catch (err) {
-      console.log("Follow action failed");
 
-      // ❌ rollback
-      if (isFollowing) {
-        setIsFollowing(true);
-        setFollowersCount((prev) => prev + 1);
-      } else {
-        setIsFollowing(false);
-        setFollowersCount((prev) => prev - 1);
-      }
+      await onRefreshProfile?.();
+    } catch {
+      console.log("Follow action failed");
+    } finally {
+      setFollowLoading(false);
     }
   };
   return (
@@ -70,14 +72,14 @@ const ProfileHeader = ({ profile }) => {
             />
           ) : (
             <div className="h-14 w-14 rounded-xl bg-white/10 flex items-center justify-center text-lg font-semibold">
-              {user.username[0].toUpperCase()}
+              {getUserInitial(user)}
             </div>
           )}
 
           {/* Name + username */}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{user.username}</h2>
+              <h2 className="text-lg font-semibold">{getDisplayName(user)}</h2>
 
               {user.isVerified && (
                 <span className="text-blue-400 text-sm">✔</span>
@@ -90,24 +92,46 @@ const ProfileHeader = ({ profile }) => {
 
         {/* Right Buttons */}
         <div className="flex items-center gap-3">
-          <button className="p-2 rounded-full bg-white/10 hover:bg-white/20">
-            <MoreHorizontal size={18} />
-          </button>
-
           {isOwnProfile ? (
-            <button className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-sm">
-              Edit
-            </button>
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((current) => !current)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-12 z-20 min-w-[170px] rounded-xl border border-white/10 bg-[#12151c] p-1 shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setEditOpen(true);
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-white/5"
+                  >
+                    Edit profile
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <button
               onClick={handleFollow}
+              disabled={followLoading}
               className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                isFollowing
+                profile.isFollowing
                   ? "bg-white/10 hover:bg-white/20"
                   : "bg-blue-500 hover:bg-blue-600"
-              }`}
+              } disabled:opacity-60`}
             >
-              {isFollowing ? "Following" : "Follow"}
+              {followLoading
+                ? "Please wait..."
+                : profile.isFollowing
+                  ? "Following"
+                  : "Follow"}
             </button>
           )}
         </div>
@@ -127,7 +151,9 @@ const ProfileHeader = ({ profile }) => {
           }
           className="transition hover:text-white"
         >
-          <span className="font-semibold text-white">{followersCount}</span>{" "}
+          <span className="font-semibold text-white">
+            {user.followersCount}
+          </span>{" "}
           <span className="text-gray-400">Followers</span>
         </button>
 
@@ -146,6 +172,13 @@ const ProfileHeader = ({ profile }) => {
           <span className="text-gray-400">Following</span>
         </button>
       </div>
+
+      <EditProfileModal
+        user={user}
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        onSaved={onProfileUpdated}
+      />
     </div>
   );
 };
