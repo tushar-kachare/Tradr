@@ -240,6 +240,7 @@ const getFeed = async (req, res) => {
         user: {
           select: {
             id: true,
+            fullName:true,
             username: true,
             avatarUrl: true,
           },
@@ -250,6 +251,7 @@ const getFeed = async (req, res) => {
           include: {
             user: {
               select: {
+                fullName:true,
                 id: true,
                 username: true,
                 avatarUrl: true,
@@ -335,6 +337,7 @@ const getExplore = async (req, res) => {
           select: {
             id: true,
             username: true,
+            fullName:true,
             avatarUrl: true,
           },
         },
@@ -345,6 +348,7 @@ const getExplore = async (req, res) => {
             user: {
               select: {
                 id: true,
+                fullName:true,
                 username: true,
                 avatarUrl: true,
               },
@@ -424,6 +428,7 @@ const getPost = async (req, res) => {
         user: {
           select: {
             id: true,
+            fullName:true,
             username: true,
             avatarUrl: true,
             role: true,
@@ -455,6 +460,7 @@ const getPost = async (req, res) => {
             user: {
               select: {
                 id: true,
+                fullName:true,
                 username: true,
                 avatarUrl: true,
                 isVerified: true,
@@ -469,6 +475,7 @@ const getPost = async (req, res) => {
             user: {
               select: {
                 id: true,
+                fullName:true,
                 username: true,
                 avatarUrl: true,
                 role: true,
@@ -499,6 +506,7 @@ const getPost = async (req, res) => {
                 createdAt: true,
                 user: {
                   select: {
+                    fullName:true,
                     id: true,
                     username: true,
                     avatarUrl: true,
@@ -883,6 +891,7 @@ const createComment = async (req, res) => {
           createdAt: true,
           user: {
             select: {
+              fullName: true,
               id: true,
               username: true,
               avatarUrl: true,
@@ -964,6 +973,7 @@ const getComments = async (req, res) => {
           user: {
             select: {
               id: true,
+              fullName: true,
               username: true,
               avatarUrl: true,
               isVerified: true,

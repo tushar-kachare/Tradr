@@ -26,6 +26,8 @@ model User {
   password       String?
   googleId       String?   @unique
   avatarUrl      String?
+  fullName       String?
+  bio            String?
   website        String?
   location       String?
   role           Role      @default(user)

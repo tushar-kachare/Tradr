@@ -139,7 +139,7 @@ const createTrade = async (req, res) => {
         include: {
           coin: { select: { symbol: true, name: true, logoUrl: true } },
           user: {
-            select: { username: true, avatarUrl: true },
+            select: { fullName: true, username: true, avatarUrl: true },
           },
         },
       });
@@ -267,7 +267,7 @@ const updateTrade = async (req, res) => {
       data: updateData,
       include: {
         coin: { select: { symbol: true, name: true, logoUrl: true } },
-        user: { select: { username: true, avatarUrl: true } },
+        user: { select: { fullName: true, username: true, avatarUrl: true } },
       },
     });
 
@@ -292,7 +292,7 @@ const getTradeById = async (req, res) => {
       where: { id, isDeleted: false },
       include: {
         coin: { select: { symbol: true, name: true, logoUrl: true } },
-        user: { select: { username: true, avatarUrl: true } },
+        user: { select: { fullName: true, username: true, avatarUrl: true } },
       },
     });
 

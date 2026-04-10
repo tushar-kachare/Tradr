@@ -8,6 +8,8 @@ const me = async (req, res) => {
       where: { id: req.user.userId },
       select: {
         id: true,
+        fullName: true,
+        bio: true,
         username: true,
         email: true,
         avatarUrl: true,
@@ -46,6 +48,8 @@ const getUserByUsername = async function (req, res) {
       where: { username },
       select: {
         id: true,
+        fullName: true,
+        bio: true,
         username: true,
         avatarUrl: true,
         website: true,
@@ -380,6 +384,7 @@ const getFollowers = async (req, res) => {
         follower: {
           select: {
             id: true, // 🔥 needed
+            fullName: true,
             username: true,
             avatarUrl: true,
             isVerified: true,
@@ -448,6 +453,7 @@ const getFollowing = async (req, res) => {
         following: {
           select: {
             id: true, // 🔥 needed
+            fullName: true,
             username: true,
             avatarUrl: true,
             isVerified: true,
@@ -509,6 +515,7 @@ const getUserPosts = async (req, res) => {
       select: {
         id: true,
         username: true,
+        fullName: true,
         avatarUrl: true,
         role: true,
         isVerified: true,
@@ -571,6 +578,7 @@ const getUserPosts = async (req, res) => {
               user: {
                 select: {
                   id: true,
+                  fullName: true,
                   username: true,
                   avatarUrl: true,
                   role: true,
@@ -743,6 +751,7 @@ const getUserPortfolio = async (req, res) => {
 
     return res.status(200).json({
       username: user.username,
+      fullName: user.fullName,
       avatarUrl: user.avatarUrl,
       name: portfolio.name,
       currency: portfolio.currency,
@@ -796,7 +805,7 @@ const getUserTrades = async (req, res) => {
     // Check if target user exists
     const targetUser = await prisma.user.findUnique({
       where: { username },
-      select: { id: true, username: true },
+      select: { id: true, username: true, fullName: true },
     });
 
     if (!targetUser) {
@@ -845,7 +854,12 @@ const getUserTrades = async (req, res) => {
             select: {
               currency: true,
               user: {
-                select: { id: true, username: true, avatarUrl: true },
+                select: {
+                  fullName: true,
+                  id: true,
+                  username: true,
+                  avatarUrl: true,
+                },
               },
             },
           },
@@ -857,7 +871,11 @@ const getUserTrades = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
-        user: { id: targetUser.id, username: targetUser.username },
+        user: {
+          id: targetUser.id,
+          username: targetUser.username,
+          fullname: targetUser.fullName,
+        },
         trades,
         pagination: {
           total,
@@ -919,6 +937,7 @@ const getUserLikes = async (req, res) => {
               createdAt: true,
               user: {
                 select: {
+                  fullName: true,
                   id: true,
                   username: true,
                   avatarUrl: true,
@@ -954,6 +973,7 @@ const getUserLikes = async (req, res) => {
                   user: {
                     select: {
                       id: true,
+                      fullName: true,
                       username: true,
                       avatarUrl: true,
                       role: true,
@@ -1107,6 +1127,7 @@ const getUserBookmarks = async (req, res) => {
               },
               user: {
                 select: {
+                  fullName: true,
                   id: true,
                   username: true,
                   avatarUrl: true,
@@ -1119,6 +1140,7 @@ const getUserBookmarks = async (req, res) => {
                   user: {
                     select: {
                       id: true,
+                      fullName: true,
                       username: true,
                       avatarUrl: true,
                       role: true,
@@ -1274,6 +1296,7 @@ const searchUser = async (req, res) => {
         orderBy: { followersCount: "desc" }, // most followed first
         select: {
           id: true,
+          fullName: true,
           username: true,
           avatarUrl: true,
           role: true,
@@ -1341,6 +1364,7 @@ const getTopUsers = async (req, res) => {
       select: {
         id: true,
         username: true,
+        fullName: true,
         avatarUrl: true,
         isVerified: true,
         followersCount: true,
@@ -1368,6 +1392,73 @@ const getTopUsers = async (req, res) => {
     });
   }
 };
+
+const updateMe = async (req, res) => {
+  try {
+    const hasFullName = Object.prototype.hasOwnProperty.call(req.body, "fullName");
+    const hasBio = Object.prototype.hasOwnProperty.call(req.body, "bio");
+
+    if (!hasFullName && !hasBio) {
+      return res.status(400).json({
+        success: false,
+        message: "Nothing to update",
+      });
+    }
+
+    const data = {};
+
+    if (hasFullName) {
+      const fullName = String(req.body.fullName ?? "").trim();
+
+      if (!fullName) {
+        return res.status(400).json({
+          success: false,
+          message: "Full name is required",
+        });
+      }
+
+      data.fullName = fullName;
+    }
+
+    if (hasBio) {
+      data.bio = String(req.body.bio ?? "").trim();
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.userId },
+      data,
+      select: {
+        id: true,
+        fullName: true,
+        bio: true,
+        username: true,
+        email: true,
+        avatarUrl: true,
+        website: true,
+        location: true,
+        role: true,
+        isVerified: true,
+        followersCount: true,
+        followingCount: true,
+        postsCount: true,
+        tradesCount: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      user: updatedUser,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
+    });
+  }
+};
 // PATCH /users/me/avatar
 const updateAvatar = async (req, res) => {
   try {
@@ -1391,7 +1482,7 @@ const updateAvatar = async (req, res) => {
     const updated = await prisma.user.update({
       where: { id: req.user.userId },
       data: { avatarUrl },
-      select: { id: true, username: true, avatarUrl: true },
+      select: { fullName: true, id: true, username: true, avatarUrl: true },
     });
 
     return res.status(200).json({ success: true, data: updated });
@@ -1416,5 +1507,6 @@ module.exports = {
   getUserBookmarks,
   searchUser,
   getTopUsers,
+  updateMe,
   updateAvatar,
 };

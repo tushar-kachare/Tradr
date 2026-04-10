@@ -9,6 +9,8 @@ const buildSafeUser = (user) => ({
   email: user.email,
   avatarUrl: user.avatarUrl || null,
   website: user.website || "",
+  fullName: user.fullName,
+  bio: user.bio,
   location: user.location || "",
   role: user.role || "user",
   isVerified: user.isVerified ?? false,

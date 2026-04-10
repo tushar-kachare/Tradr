@@ -7,6 +7,7 @@ const usersController = require("./users.controller");
 
 router.get("/me", authenticate, usersController.me);
 router.delete("/me", authenticate, usersController.deleteMe);
+router.patch("/me", authenticate, usersController.updateMe);
 router.patch("/me/password", authenticate, usersController.changePassword);
 router.get("/:userId/likes", authenticate, usersController.getUserLikes);
 router.get(

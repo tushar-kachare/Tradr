@@ -236,6 +236,7 @@ const getPortfolioTrades = async (req, res) => {
         name: true,
         user: {
           select: {
+            fullName: true,
             username: true,
           },
         },
