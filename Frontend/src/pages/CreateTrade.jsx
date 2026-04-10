@@ -608,6 +608,36 @@ const CreateTrade = () => {
           </button>
         </div>
 
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sharePublicly}
+              onChange={(event) => setSharePublicly(event.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-white/20 bg-transparent accent-cyan-400"
+            />
+
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white">
+                Share publicly after creating trade
+              </p>
+            </div>
+          </label>
+
+          {sharePublicly && (
+            <div className="mt-4">
+              <p className="mb-1 text-xs text-gray-400">Post caption</p>
+              <textarea
+                value={shareContent}
+                onChange={(event) => setShareContent(event.target.value)}
+                rows={3}
+                placeholder="Write something about this trade..."
+                className="w-full rounded-lg bg-black/20 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-400"
+              />
+            </div>
+          )}
+        </div>
+
         {/* Errors */}
         {coinOptionsError && (
           <p className="text-xs text-red-400">{coinOptionsError}</p>
