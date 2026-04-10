@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  BarChart3,
-  BriefcaseBusiness,
-  CircleAlert,
-  Loader2,
-  Radio,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import AsyncSelect from "react-select/async";
+import { ArrowLeft, BriefcaseBusiness } from "lucide-react";
 import { createTrade } from "../api/tradeApi";
 import { shareTradePost } from "../api/postActions";
 import { fetchMyPortfolio } from "../api/profileApi";
+import { searchCoins } from "../api/coinApi";
 import { useLivePriceStore } from "../store/livePriceStore";
 import { useAuth } from "../context/AuthContext";
-
+import toast from "react-hot-toast";
 const initialForm = {
   coin: "BTC",
   tradeType: "long",
@@ -38,6 +30,14 @@ const formatMoney = (value, currency = "USD") => {
   }).format(numericValue)}`;
 };
 
+const mapCoinToOption = (coin) => ({
+  value: coin.symbol,
+  label: `${coin.symbol} - ${coin.name}`,
+  symbol: coin.symbol,
+  name: coin.name,
+  logoUrl: coin.logoUrl,
+});
+
 const CreateTrade = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,6 +55,9 @@ const CreateTrade = () => {
   const [portfolioLoading, setPortfolioLoading] =
     useState(!preselectedPortfolio);
   const [portfolioError, setPortfolioError] = useState("");
+  const [defaultCoinOptions, setDefaultCoinOptions] = useState([]);
+  const [selectedCoinOption, setSelectedCoinOption] = useState(null);
+  const [coinOptionsError, setCoinOptionsError] = useState("");
 
   const prices = useLivePriceStore((state) => state.prices);
   const connectionStatus = useLivePriceStore((state) => state.connectionStatus);
@@ -110,12 +113,113 @@ const CreateTrade = () => {
     loadPortfolio();
   }, []);
 
+  useEffect(() => {
+    const loadDefaultCoins = async () => {
+      try {
+        setCoinOptionsError("");
+        const response = await searchCoins();
+        const options = (response?.coins ?? []).map(mapCoinToOption);
+
+        setDefaultCoinOptions(options);
+        setSelectedCoinOption(
+          options.find(
+            (option) =>
+              option.value.toLowerCase() === initialForm.coin.toLowerCase(),
+          ) ?? {
+            value: initialForm.coin,
+            label: initialForm.coin,
+            symbol: initialForm.coin,
+            name: initialForm.coin,
+            logoUrl: null,
+          },
+        );
+      } catch (loadError) {
+        setCoinOptionsError(
+          loadError.response?.data?.message || "Failed to load coins.",
+        );
+      }
+    };
+
+    loadDefaultCoins();
+  }, []);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({
       ...current,
-      [name]: name === "coin" ? value.toUpperCase() : value,
+      [name]: value,
     }));
+  };
+
+  const loadCoinOptions = async (inputValue) => {
+    try {
+      setCoinOptionsError("");
+      const response = await searchCoins(inputValue);
+
+      return (response?.coins ?? []).map(mapCoinToOption);
+    } catch (loadError) {
+      setCoinOptionsError(
+        loadError.response?.data?.message || "Failed to load coins.",
+      );
+      return [];
+    }
+  };
+
+  const handleCoinChange = (option) => {
+    setSelectedCoinOption(option);
+    setCoinOptionsError("");
+    setForm((current) => ({
+      ...current,
+      coin: option?.value ?? "",
+    }));
+  };
+
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: "rgba(255, 255, 255, 0.05)",
+      borderColor: state.isFocused
+        ? "rgb(34, 211, 238)"
+        : "rgba(255, 255, 255, 0.08)",
+      boxShadow: "none",
+      minHeight: 50,
+      borderRadius: 12,
+      "&:hover": {
+        borderColor: "rgba(255, 255, 255, 0.16)",
+      },
+    }),
+    input: (base) => ({
+      ...base,
+      color: "#ffffff",
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: "#ffffff",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: "#9ca3af",
+    }),
+    menu: (base) => ({
+      ...base,
+      backgroundColor: "#111827",
+      border: "1px solid rgba(255, 255, 255, 0.08)",
+      overflow: "hidden",
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "rgba(34, 211, 238, 0.12)" : "#111827",
+      color: "#ffffff",
+      cursor: "pointer",
+    }),
+    noOptionsMessage: (base) => ({
+      ...base,
+      color: "#9ca3af",
+    }),
+    loadingMessage: (base) => ({
+      ...base,
+      color: "#9ca3af",
+    }),
   };
 
   const handleSelectPortfolio = () => {
@@ -156,6 +260,7 @@ const CreateTrade = () => {
         coin: normalizedCoin,
       });
 
+      toast.success("Trade Created!");
       const createdTradeId = tradeResponse.data?.trade?.id;
 
       if (sharePublicly) {
@@ -352,7 +457,7 @@ const CreateTrade = () => {
   return (
     <div className="mx-auto w-full max-w-2xl text-white">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-5">
         <button
           onClick={() => navigate(-1)}
           className="p-2 rounded-full hover:bg-white/10 transition"
@@ -360,12 +465,12 @@ const CreateTrade = () => {
           <ArrowLeft size={20} />
         </button>
 
-        <h1 className="mt-3 text-xl font-semibold">Create Trade</h1>
-        <p className="text-sm text-gray-400">{selectedPortfolio.name}</p>
+        <h1 className="mt-2 text-lg font-semibold">Create Trade</h1>
+        <p className="text-xs text-gray-400">{selectedPortfolio.name}</p>
       </div>
 
       {/* Live + Balance */}
-      <div className="mb-6 flex justify-between rounded-xl bg-white/5 p-4 text-sm">
+      <div className="mb-5 flex justify-between rounded-xl bg-white/5 p-3 text-sm">
         <div>
           <p className="text-gray-400">Live Price</p>
           <p className="font-semibold">
@@ -383,44 +488,108 @@ const CreateTrade = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Basic Inputs */}
-        <input
-          name="coin"
-          value={form.coin}
-          onChange={handleChange}
-          placeholder="Coin (BTC)"
-          className="w-full rounded-lg bg-white/5 px-4 py-3 outline-none focus:ring-1 focus:ring-cyan-400"
-        />
+        {/* 🔥 2 Column Layout */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* LEFT SIDE */}
+          <div className="space-y-4">
+            {/* Coin */}
+            <div>
+              <p className="mb-1 text-xs text-gray-400">Coin</p>
+              <AsyncSelect
+                cacheOptions
+                defaultOptions={defaultCoinOptions}
+                loadOptions={loadCoinOptions}
+                value={selectedCoinOption}
+                onChange={handleCoinChange}
+                placeholder="Search"
+                isClearable
+                styles={selectStyles}
+              />
+            </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            name="positionSize"
-            type="number"
-            value={form.positionSize}
-            onChange={handleChange}
-            placeholder="Size %"
-            className="rounded-lg bg-white/5 px-4 py-3 outline-none"
-          />
+            {/* Position Size */}
+            <div>
+              <p className="mb-1 text-xs text-gray-400">Size (%)</p>
+              <input
+                name="positionSize"
+                type="number"
+                value={form.positionSize}
+                onChange={handleChange}
+                className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-400"
+              />
+            </div>
 
-          <input
-            name="leverage"
-            type="number"
-            value={form.leverage}
-            onChange={handleChange}
-            placeholder="Leverage"
-            className="rounded-lg bg-white/5 px-4 py-3 outline-none"
-          />
+            {/* Leverage (SMALL SLIDER) */}
+            <div>
+              <div className="flex justify-between mb-1">
+                <p className="text-xs text-gray-400">Leverage</p>
+                <p className="text-xs font-semibold">{form.leverage || 1}x</p>
+              </div>
+
+              <input
+                type="range"
+                min="1"
+                max="10"
+                step="1"
+                value={form.leverage || 1}
+                onChange={(e) =>
+                  setForm((c) => ({
+                    ...c,
+                    leverage: Number(e.target.value),
+                  }))
+                }
+                className="w-full h-1 accent-cyan-400 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="space-y-4">
+            {/* Target */}
+            <div>
+              <p className="mb-1 text-xs text-gray-400">Target Price</p>
+              <input
+                name="targetPrice"
+                value={form.targetPrice}
+                onChange={handleChange}
+                className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-400"
+              />
+            </div>
+
+            {/* Stop Loss */}
+            <div>
+              <p className="mb-1 text-xs text-gray-400">Stop Loss</p>
+              <input
+                name="stopLoss"
+                value={form.stopLoss}
+                onChange={handleChange}
+                className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-400"
+              />
+            </div>
+
+            {/* Strategy */}
+            <div>
+              <p className="mb-1 text-xs text-gray-400">Strategy</p>
+              <textarea
+                name="strategy"
+                value={form.strategy}
+                onChange={handleChange}
+                rows={3}
+                className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-400"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Long / Short */}
+        {/* 🔥 LONG / SHORT AT BOTTOM */}
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => setForm((c) => ({ ...c, tradeType: "long" }))}
-            className={`flex-1 py-2 rounded-lg ${
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
               form.tradeType === "long"
                 ? "bg-green-500 text-black"
-                : "bg-white/5"
+                : "bg-white/5 hover:bg-white/10"
             }`}
           >
             Long
@@ -429,53 +598,28 @@ const CreateTrade = () => {
           <button
             type="button"
             onClick={() => setForm((c) => ({ ...c, tradeType: "short" }))}
-            className={`flex-1 py-2 rounded-lg ${
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
               form.tradeType === "short"
                 ? "bg-red-500 text-black"
-                : "bg-white/5"
+                : "bg-white/5 hover:bg-white/10"
             }`}
           >
             Short
           </button>
         </div>
 
-        {/* Optional Risk */}
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            name="targetPrice"
-            value={form.targetPrice}
-            onChange={handleChange}
-            placeholder="Target (optional)"
-            className="rounded-lg bg-white/5 px-4 py-3 outline-none"
-          />
-
-          <input
-            name="stopLoss"
-            value={form.stopLoss}
-            onChange={handleChange}
-            placeholder="Stop Loss"
-            className="rounded-lg bg-white/5 px-4 py-3 outline-none"
-          />
-        </div>
-
-        {/* Strategy (optional) */}
-        <textarea
-          name="strategy"
-          value={form.strategy}
-          onChange={handleChange}
-          placeholder="Strategy (optional)"
-          className="w-full rounded-lg bg-white/5 px-4 py-3 outline-none"
-        />
-
-        {/* Error */}
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {/* Errors */}
+        {coinOptionsError && (
+          <p className="text-xs text-red-400">{coinOptionsError}</p>
+        )}
+        {error && <p className="text-xs text-red-400">{error}</p>}
 
         {/* Actions */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex-1 rounded-lg bg-white/5 py-2 text-sm"
+            className="flex-1 rounded-lg bg-white/5 py-2 text-sm hover:bg-white/10"
           >
             Cancel
           </button>
@@ -483,7 +627,7 @@ const CreateTrade = () => {
           <button
             type="submit"
             disabled={isSubmitting || !livePrice}
-            className="flex-1 rounded-lg bg-cyan-400 py-2 text-sm text-black"
+            className="flex-1 rounded-lg bg-cyan-400 py-2 text-sm font-semibold text-black hover:bg-cyan-300"
           >
             {isSubmitting ? "Creating..." : "Create"}
           </button>

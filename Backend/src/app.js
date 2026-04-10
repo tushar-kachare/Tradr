@@ -6,6 +6,7 @@ const usersRouter = require("./modules/users/users.routes");
 const postsRouter = require("./modules/posts/posts.routes");
 const tradesRouter = require("./modules/trades/trades.routes");
 const portfolioRouter = require("./modules/portfolio/portfolio.routes");
+const coinsRouter = require("./modules/coins/coins.routes");
 
 const app = express();
 app.use(
@@ -24,5 +25,6 @@ app.use("/api/users", usersRouter);
 app.use("/api/posts", postsRouter);
 app.use("/api/portfolio", portfolioRouter);
 app.use("/api/trades", tradesRouter);
+app.use("/api/coins", coinsRouter);
 
 module.exports = app;
