@@ -43,6 +43,16 @@ export const fetchUserPortfolio = async (username) => {
   return res.data;
 };
 
+export const fetchMyPortfolio = async () => {
+  const res = await API.get("/portfolio/me");
+  return res.data;
+};
+
+export const createPortfolio = async (payload) => {
+  const res = await API.post("/portfolio", payload);
+  return res.data;
+};
+
 export const fetchPortfolioTrades = async (portfolioId, options = {}) => {
   const res = await API.get(`/portfolio/${portfolioId}/trades`, {
     params: {

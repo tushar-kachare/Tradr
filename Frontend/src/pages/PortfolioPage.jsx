@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { PlusCircle } from "lucide-react";
 import { fetchPortfolioTrades } from "../api/profileApi";
 import PortfolioPageHeader from "../components/portfolio/PortfolioPageHeader";
 import PortfolioStats from "../components/portfolio/PortfolioStats";
 import PortfolioTradeTabs from "../components/portfolio/PortfolioTradeTabs";
 import PortfolioTradesSection from "../components/portfolio/PortfolioTradesSection";
+import { useAuth } from "../context/AuthContext";
 
 const fetchAllTradesByStatus = async (portfolioId, status) => {
   const allTrades = [];
@@ -35,9 +37,10 @@ const fetchAllTradesByStatus = async (portfolioId, status) => {
 };
 
 const PortfolioPage = () => {
+  const { user: currentUser } = useAuth();
   const { portfolioId } = useParams();
   const location = useLocation();
-  const username = location.state?.username ?? "";
+  
   const portfolioFromState = location.state?.portfolio ?? null;
   const [portfolio, setPortfolio] = useState(null);
   const [activeTab, setActiveTab] = useState("open");
@@ -84,7 +87,7 @@ const PortfolioPage = () => {
           open: openTradesRes?.pagination?.total ?? openTrades.length,
           closed: closedTradesRes?.pagination?.total ?? closedTrades.length,
         });
-      } catch (err) {
+      } catch {
         setTradesError("Failed to load trades");
         setTradesByStatus({ open: [], closed: [] });
         setTradeCounts({ open: 0, closed: 0 });
@@ -131,6 +134,9 @@ const PortfolioPage = () => {
     );
   }
 
+  const username = portfolio?.user?.username;
+  console.log(portfolio);
+  
   if (tradesError || !portfolio) {
     return (
       <div className="mt-10 text-center text-red-400">
@@ -142,11 +148,29 @@ const PortfolioPage = () => {
   const activeTrades = tradesByStatus[activeTab] ?? [];
   const openCount = tradeCounts.open;
   const closedCount = tradeCounts.closed;
+  const canCreateTrade = Boolean(
+    currentUser?.username &&
+      username &&
+      currentUser.username.toLowerCase() === username.toLowerCase(),
+  );
 
+  
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-[750px]">
         <PortfolioPageHeader username={username} portfolioName={portfolio.name} />
+        {canCreateTrade && (
+          <div className="px-4 pt-5">
+            <Link
+              to="/create-trade"
+              state={{ portfolio, source: "portfolio-page" }}
+              className="inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+            >
+              <PlusCircle size={16} />
+              Create Trade In This Portfolio
+            </Link>
+          </div>
+        )}
         <PortfolioStats
           portfolio={portfolio}
           winRate={winRate}
@@ -163,6 +187,8 @@ const PortfolioPage = () => {
           activeTab={activeTab}
           loading={tradesLoading}
           error={tradesError}
+          canCreateTrade={canCreateTrade}
+          portfolio={portfolio}
         />
       </div>
     </div>

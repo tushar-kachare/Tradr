@@ -234,6 +234,11 @@ const getPortfolioTrades = async (req, res) => {
       select: {
         id: true,
         name: true,
+        user: {
+          select: {
+            username: true,
+          },
+        },
         balance: true,
         initialValue: true,
       },

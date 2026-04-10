@@ -8,8 +8,9 @@ import {
   followUser,
   unFollowUser,
 } from "../api/profileApi";
+import { useAuth } from "../context/AuthContext";
 
-const FollowUserRow = ({ user, onToggleFollow, disabled }) => {
+const FollowUserRow = ({ user,currentUser, onToggleFollow, disabled }) => {
   const initials = (user.username || "U").slice(0, 1).toUpperCase();
 
   return (
@@ -41,7 +42,7 @@ const FollowUserRow = ({ user, onToggleFollow, disabled }) => {
         </div>
       </Link>
 
-      <button
+      {currentUser.username != user.username && <button
         type="button"
         onClick={() => onToggleFollow(user)}
         disabled={disabled}
@@ -52,12 +53,13 @@ const FollowUserRow = ({ user, onToggleFollow, disabled }) => {
         } disabled:cursor-not-allowed disabled:opacity-60`}
       >
         {user.isFollowing ? "Following" : "Follow"}
-      </button>
+      </button>}
     </div>
   );
 };
 
 const FollowListPage = () => {
+  const {user: currentUser} = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { username } = useParams();
@@ -207,6 +209,7 @@ const FollowListPage = () => {
               <FollowUserRow
                 key={listUser.id}
                 user={listUser}
+                currentUser={currentUser}
                 onToggleFollow={handleToggleFollow}
                 disabled={pendingUsername === listUser.username}
               />

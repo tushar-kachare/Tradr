@@ -3,12 +3,19 @@ import PostList from "./PostList";
 import LikedPosts from "./LikedPosts";
 import BookmarkPosts from "./BookmarkPosts";
 
-const ProfileContent = ({ profile, activeTab }) => {
+const ProfileContent = ({
+  profile,
+  activeTab,
+  isOwner = false,
+  onRefreshProfile,
+}) => {
   if (activeTab === "portfolios") {
     return (
       <PortfolioList
         portfolio={profile.portfolio}
         username={profile.user.username}
+        isOwner={isOwner}
+        onPortfolioCreated={onRefreshProfile}
       />
     );
   }
