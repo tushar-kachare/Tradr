@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { repostPost, getPostById } from "../api/postActions";
-import PostHeader from "../components/Post/PostHeader";
-import PostContent from "../components/Post/PostContent";
-import TradeCard from "../components/Post/TradeCard";
-import RepostWrapper from "../components/Post/RepostWrapper";
+import PostHeader from "../components/post/PostHeader";
+import PostContent from "../components/post/PostContent";
+import TradeCard from "../components/post/TradeCard";
+import RepostWrapper from "../components/post/RepostWrapper";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
