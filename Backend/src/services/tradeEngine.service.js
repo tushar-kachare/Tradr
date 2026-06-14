@@ -5,7 +5,11 @@ const { closeTradeService } = require("./trade.service");
 const startTradeEngine = () => {
   console.log("Trade engine started...");
 
+  let isRuning = false; // prevent overlapping runs
   setInterval(async () => {
+    if (isRuning) return;
+    isRuning = true;
+
     try {
       const openTrades = await prisma.trade.findMany({
         where: { status: "open" },
@@ -51,6 +55,8 @@ const startTradeEngine = () => {
       }
     } catch (err) {
       console.error("Trade Engine Error: ", err.message);
+    } finally {
+      isRuning = false;
     }
   }, 1000);
 };

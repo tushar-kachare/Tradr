@@ -106,14 +106,15 @@ const startPriceStream = (symbols = []) => {
 
   priceFeedSocket.on("close", () => {
     console.log("Binance WebSocket closed. Reconnecting...");
+    priceFeedSocket = null;
     setTimeout(() => startPriceStream(symbols), 5000);
   });
 
   priceFeedSocket.on("error", (err) => {
     console.error("Binance WebSocket error:", err.message);
-    if (priceFeedSocket) {
-      priceFeedSocket.close();
-    }
+    // if (priceFeedSocket) {
+      priceFeedSocket.terminate();
+    // }
   });
 };
 

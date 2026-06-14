@@ -16,6 +16,19 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getDisplayName } from "../utils/userDisplay";
+
+const getTradeRequestError = (err, fallback) => {
+  if (err?.response?.data?.message) {
+    return err.response.data.message;
+  }
+
+  if (err?.request) {
+    return "Could not reach the server. Check your connection, login session, or CORS setup.";
+  }
+
+  return fallback;
+};
+
 const TradePage = () => {
   const { user: currentUser } = useAuth();
   const { tradeId } = useParams();
@@ -134,9 +147,9 @@ const TradePage = () => {
       setEditModal(false);
       toast.success("Trade updated!");
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ?? "Failed to update trade. Try again.";
-      setEditError(msg);
+      setEditError(
+        getTradeRequestError(err, "Failed to update trade. Try again."),
+      );
     } finally {
       setSaving(false);
     }
@@ -151,8 +164,12 @@ const TradePage = () => {
       setCloseModal(false);
       toast.success("Position closed successfully!");
     } catch (err) {
-      console.log(err.message);
-      setError(err.message);
+      const msg = getTradeRequestError(
+        err,
+        "Failed to close trade. Try again.",
+      );
+      toast.error(msg);
+      setError(msg);
     } finally {
       setClosing(false);
     }

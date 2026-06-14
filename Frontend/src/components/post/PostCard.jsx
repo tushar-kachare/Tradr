@@ -1,17 +1,25 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import PostActions from "./PostActions";
 import PostContent from "./PostContent";
 import PostHeader from "./PostHeader";
 import RepostWrapper from "./RepostWrapper";
 import TradeCard from "./TradeCard";
 import { getDisplayName } from "../../utils/userDisplay";
+import { useAuth } from "../../context/AuthContext";
+import { deletePost } from "../../api/postActions";
 
 const PostCard = ({ post, disableNavigation = false }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isDeleted, setIsDeleted] = useState(Boolean(post.isDeleted));
+  const [isDeleting, setIsDeleting] = useState(false);
   const isRepost = post.postType === "repost";
   const hasTrade = Boolean(post.trade);
   const originalPost = post.originalPost;
   const originalPostAvailable = Boolean(originalPost);
+  const canDelete = user?.id === post.user?.id;
 
   const handleCardClick = (event) => {
     if (disableNavigation) {
@@ -28,6 +36,40 @@ const PostCard = ({ post, disableNavigation = false }) => {
 
     navigate(`/post/${post.id}`);
   };
+
+  const handleDelete = async (event) => {
+    event.stopPropagation();
+
+    if (isDeleting) {
+      return;
+    }
+
+    const confirmed = window.confirm("Delete this post?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deletePost(post.id);
+      setIsDeleted(true);
+      toast.success("Post deleted");
+    } catch (error) {
+      const message =
+        error.response?.data?.message || "Could not delete this post.";
+      toast.error(message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (isDeleted) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-center text-sm text-gray-400">
+        This post has been deleted.
+      </div>
+    );
+  }
 
   return (
     <div className="">
@@ -81,7 +123,11 @@ const PostCard = ({ post, disableNavigation = false }) => {
                 )}
               </RepostWrapper>
 
-              <PostActions post={post} />
+              <PostActions
+                post={post}
+                canDelete={canDelete}
+                onDelete={handleDelete}
+              />
             </>
           ) : (
             <>
@@ -98,7 +144,11 @@ const PostCard = ({ post, disableNavigation = false }) => {
                 />
               )}
 
-              <PostActions post={post} />
+              <PostActions
+                post={post}
+                canDelete={canDelete}
+                onDelete={handleDelete}
+              />
             </>
           )}
         </div>

@@ -10,6 +10,7 @@ const {
 const { startTradeEngine } = require("./src/services/tradeEngine.service");
 
 const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
 
 async function init() {
   const coins = await prisma.coin.findMany({
@@ -20,12 +21,14 @@ async function init() {
 
   startPriceStream(symbols);
   startTradeEngine();
+
+  server.listen(PORT, () => {
+    console.log(`Tradr server running on port ${PORT}`);
+  });
 }
-init();
-const PORT = process.env.PORT || 3000;
 
-setupPriceBroadcastServer(server);
-
-server.listen(PORT, () => {
-  console.log(`Tradr server running on port ${PORT}`);
+init().catch((error) => {
+  console.error("Failed to start Tradr server:", error);
+  process.exit(1);
 });
+setupPriceBroadcastServer(server);

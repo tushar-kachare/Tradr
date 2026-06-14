@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Repeat2, Bookmark } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Bookmark, Trash2 } from "lucide-react";
 import {
   likePost,
   unlikePost,
@@ -8,7 +8,7 @@ import {
 } from "../../api/postActions";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const PostActions = ({ post }) => {
+const PostActions = ({ post, canDelete = false, onDelete }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [liked, setLiked] = useState(post.isLiked || false);
@@ -130,16 +130,31 @@ const PostActions = ({ post }) => {
         </button>
       </div>
 
-      {/* RIGHT ACTION */}
-      <button
-        onClick={handleBookmark}
-        className="transition hover:text-yellow-400"
-      >
-        <Bookmark
-          size={18}
-          className={bookmarked ? "fill-yellow-400 text-yellow-400" : ""}
-        />
-      </button>
+      {/* RIGHT ACTIONS */}
+      <div className="flex items-center gap-4">
+        {canDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="transition hover:text-red-400"
+            aria-label="Delete post"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={handleBookmark}
+          className="transition hover:text-yellow-400"
+          aria-label={bookmarked ? "Remove bookmark" : "Bookmark post"}
+        >
+          <Bookmark
+            size={18}
+            className={bookmarked ? "fill-yellow-400 text-yellow-400" : ""}
+          />
+        </button>
+      </div>
     </div>
   );
 };

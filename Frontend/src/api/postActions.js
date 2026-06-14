@@ -18,6 +18,10 @@ export const createPost = async (formData) => {
   return API.post("/posts", formData);
 };
 
+export const deletePost = async (postId) => {
+  return API.delete(`/posts/${postId}`);
+};
+
 export const shareTradePost = async ({ content, tradeId }) => {
   return API.post("/posts", {
     content,
