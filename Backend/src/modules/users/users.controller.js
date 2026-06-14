@@ -70,10 +70,7 @@ const getUserByUsername = async function (req, res) {
       });
     }
 
-    console.log(user);
-
     const isOwnProfile = loggedInUser === user.id;
-    console.log(loggedInUser, user.id);
 
     let isFollowing = false;
 
@@ -275,7 +272,7 @@ const followUser = async (req, res) => {
       message: `You are now following ${username}`,
     });
   } catch (err) {
-    console.log(err);
+    console.error("followUser error:", err);
     return res.status(500).json({
       success: false,
       message: "Failed to follow user",
@@ -353,7 +350,7 @@ const unFollowUser = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error("unFollowUser error:", err);
     return res.status(500).json({
       success: false,
       message: "Failed to unfollow user",
@@ -504,7 +501,6 @@ const getUserPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
-  console.log(userId);
 
   try {
     const targetUser = await prisma.user.findFirst({
