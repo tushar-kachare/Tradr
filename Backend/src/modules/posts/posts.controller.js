@@ -1,7 +1,6 @@
 const prisma = require("../../config/db");
 
 const createPost = async (req, res) => {
-  // frontend should send => {content? , tradeId? , originalPostId?, mediaUrls?}
   try {
     const userId = req.user.userId;
     const { content, tradeId, originalPostId } = req.body;

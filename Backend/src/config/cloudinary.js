@@ -28,6 +28,12 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
+const getCloudinaryThumbnail = (url, width = 600) => {
+  if (!url) return url;
+  // Insert transformation before /upload/
+  return url.replace("/upload/", `/upload/w_${width},c_limit,q_auto,f_auto/`);
+};
+
 const uploadPostMedia = multer({
   storage: postMediaStorage,
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
@@ -38,4 +44,4 @@ const uploadAvatar = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-module.exports = { cloudinary, uploadPostMedia, uploadAvatar };
+module.exports = { cloudinary, uploadPostMedia, uploadAvatar, getCloudinaryThumbnail };

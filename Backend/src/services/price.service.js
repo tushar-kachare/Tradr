@@ -1,8 +1,8 @@
 const WebSocket = require("ws");
 
-let priceFeedSocket = null;
-let priceBroadcastServer = null;
-const broadcastClients = new Set();
+let priceFeedSocket = null; // the Binance connection
+let priceBroadcastServer = null; // my WS server for frontend clients
+const broadcastClients = new Set(); // all currently connected frontend clients
 
 // In-memory price store
 const prices = {};
@@ -36,7 +36,7 @@ const broadcastPriceUpdate = (symbol, price) => {
   }
 };
 
-const setupPriceBroadcastServer = (server) => {
+const setupPriceBroadcastServer = (server) => { // outbound WS to frontend clients
   if (priceBroadcastServer) {
     return priceBroadcastServer;
   }

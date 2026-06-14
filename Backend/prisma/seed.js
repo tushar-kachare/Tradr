@@ -12,6 +12,16 @@ const coins = [
   { symbol: "AVAX", name: "Avalanche", slug: "avalanche" },
   { symbol: "LINK", name: "Chainlink", slug: "chainlink" },
   { symbol: "DOT", name: "Polkadot", slug: "polkadot" },
+  { symbol: "USDC", name: "USD Coin", slug: "usd-coin" },
+  { symbol: "LTC", name: "Litecoin", slug: "litecoin" },
+  { symbol: "BCH", name: "Bitcoin Cash", slug: "bitcoin-cash" },
+  { symbol: "UNI", name: "Uniswap", slug: "uniswap" },
+  { symbol: "ATOM", name: "Cosmos", slug: "cosmos" },
+  { symbol: "NEAR", name: "NEAR Protocol", slug: "near-protocol" },
+  { symbol: "ICP", name: "Internet Computer", slug: "internet-computer" },
+  { symbol: "FIL", name: "Filecoin", slug: "filecoin" },
+  { symbol: "ARB", name: "Arbitrum", slug: "arbitrum" },
+  { symbol: "OP", name: "Optimism", slug: "optimism" },
   // add more as needed
 ];
 
