@@ -1,17 +1,11 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import API from "../api/axios";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoding] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const fetchUser = async () => {
     try {
@@ -21,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       setUser(null);
     } finally {
-      setLoding(false);
+      setLoading(false);
     }
   };
 
