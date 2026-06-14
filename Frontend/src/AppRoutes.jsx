@@ -12,6 +12,9 @@ import PortfolioPage from "./pages/PortfolioPage";
 import TradePage from "./pages/TradePage";
 import RepostPage from "./pages/RepostPage";
 import SinglePostPage from "./pages/SinglePostPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import EducationPage from "./pages/EducationPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -40,6 +43,9 @@ const AppRoutes = () => {
           <Route path="portfolio/:portfolioId" element={<PortfolioPage />} />
           <Route path="trades/:tradeId" element={<TradePage />} />
           <Route path="post/:postId" element={<SinglePostPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="education" element={<EducationPage />} />
+          <Route path="setting" element={<SettingsPage />} />
         </Route>
 
         <Route path="/login" element={<Login />} />
