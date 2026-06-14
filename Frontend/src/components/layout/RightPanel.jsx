@@ -76,8 +76,8 @@ const RightPanel = () => {
       try {
         const res = await getTopUsers();
         setTopUsers(res.data.data.users);
-      } catch (err) {
-        console.error(err);
+      } catch {
+        setTopUsers([]);
       }
     };
     fetchTopUsers();
@@ -92,8 +92,8 @@ const RightPanel = () => {
       try {
         const res = await searchUser(query.trim(), 5);
         setSearchResults(res.data.data.users);
-      } catch (err) {
-        console.error(err);
+      } catch {
+        setSearchResults([]);
       } finally {
         setSearching(false);
       }
