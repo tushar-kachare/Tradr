@@ -11,7 +11,6 @@ import toast from "react-hot-toast";
 const RepostPage = () => {
   const navigate = useNavigate();
   const { postId } = useParams();
-  console.log(postId);
 
   const [content, setContent] = useState("");
   const [originalPost, setOriginalPost] = useState(null);
@@ -29,13 +28,11 @@ const RepostPage = () => {
   // Fetch original post
   useEffect(() => {
     const fetchPost = async () => {
-      console.log(postId);
-
       try {
         const res = await getPostById(postId);
         setOriginalPost(res.data.post);
-      } catch (err) {
-        console.log(err.message);
+      } catch {
+        toast.error("Failed to load post");
       }
     };
 
@@ -58,8 +55,7 @@ const RepostPage = () => {
 
       toast.success("Reposted successfully!");
       navigate("/");
-    } catch (err) {
-      console.log(err.message);
+    } catch {
       toast.error("Failed to repost");
     } finally {
       setLoading(false);

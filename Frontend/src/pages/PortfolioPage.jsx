@@ -135,7 +135,6 @@ const PortfolioPage = () => {
   }
 
   const username = portfolio?.user?.username;
-  console.log(portfolio);
 
   if (tradesError || !portfolio) {
     return (

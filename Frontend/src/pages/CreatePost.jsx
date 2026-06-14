@@ -54,12 +54,11 @@ const CreatePost = () => {
         formData.append("media", file);
       });
 
-      const res = await createPost(formData);
-      console.log(res.data);
+      await createPost(formData);
       toast.success("Post created!");
       navigate("/");
     } catch (err) {
-      console.log(err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to create post");
     } finally {
       setLoading(false);
     }

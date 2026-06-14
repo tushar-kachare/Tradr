@@ -106,8 +106,9 @@ const RightPanel = () => {
       await logoutUser();
       setUser(null);
       navigate("/login");
-    } catch (err) {
-      console.log(err);
+    } catch {
+      setUser(null);
+      navigate("/login");
     }
   };
 

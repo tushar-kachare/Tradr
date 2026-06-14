@@ -48,11 +48,9 @@ const PostActions = ({ post, canDelete = false, onDelete }) => {
 
     try {
       if (newLiked) {
-        const res = await likePost(post.id);
-        console.log(res.message);
+        await likePost(post.id);
       } else {
-        const res = await unlikePost(post.id);
-        console.log(res.message);
+        await unlikePost(post.id);
       }
     } catch (err) {
       setLiked(!newLiked);
@@ -72,15 +70,12 @@ const PostActions = ({ post, canDelete = false, onDelete }) => {
 
     try {
       if (newBookmarked) {
-        const res = await bookmarkPost(post.id);
-        console.log(res.data.message);
+        await bookmarkPost(post.id);
       } else {
-        const res = await unbookmarkPost(post.id);
-        console.log(res.data.message);
+        await unbookmarkPost(post.id);
       }
     } catch (err) {
       setBookmarked(!newBookmarked);
-      console.log(err.message);
     }
   };
 

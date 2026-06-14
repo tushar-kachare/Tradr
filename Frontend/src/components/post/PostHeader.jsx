@@ -27,10 +27,6 @@ const formatPostDate = (dateValue) => {
 const PostHeader = ({ user, createdAt }) => {
   const timestamp = formatPostDate(createdAt);
   const initials = getUserInitial(user);
-
-  console.log(initials);
-  
-  console.log(getDisplayName(user));
   
   return (
     <div className="flex items-center justify-between">

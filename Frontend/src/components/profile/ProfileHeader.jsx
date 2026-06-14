@@ -41,7 +41,7 @@ const ProfileHeader = ({ profile, onProfileUpdated, onRefreshProfile }) => {
 
       await onRefreshProfile?.();
     } catch {
-      console.log("Follow action failed");
+      await onRefreshProfile?.();
     } finally {
       setFollowLoading(false);
     }

@@ -139,7 +139,6 @@ const TradePage = () => {
 
     try {
       setSaving(true);
-      console.log(payload);
 
       const res = await updateTradeById(tradeId, payload);
 

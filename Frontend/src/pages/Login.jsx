@@ -23,17 +23,14 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Data:", formData);
     setError(""); // clears old error
     setLoading(true);
     try {
       const res = await loginUser(formData);
-      console.log(res.data);
       setUser(res.data.user);
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error?.message || err.message || "login failed");
-      console.log(err.response?.data || err.message);
     } finally {
       setLoading(false);
     }

@@ -6,14 +6,10 @@ export const fetchProfile = async (username) => {
 };
 
 export const fetchUserPosts = async (userId, params = {}) => {
-  console.log(params);
-  
   const res = await API.get(`/users/${userId}/posts`, { params });
   return res.data;
 };
 export const followUser = async (username) => {
-  console.log(username);
-
   await API.post(`/users/${username}/follow`);
 };
 export const unFollowUser = async (username) => {
