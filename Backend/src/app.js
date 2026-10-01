@@ -9,7 +9,7 @@ const portfolioRouter = require("./modules/portfolio/portfolio.routes");
 const coinsRouter = require("./modules/coins/coins.routes");
 
 const app = express();
-const allowedOrigins = (process.env.CLIENT_URL || "")
+const allowedOrigins = (process.env.CLIENT_URL)
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
